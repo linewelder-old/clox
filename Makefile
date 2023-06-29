@@ -16,5 +16,8 @@ $(BUILD_DIR)/%.o: $(SRC_DIR)/%.c $(BUILD_DIR)
 $(BUILD_DIR):
 	mkdir $(BUILD_DIR)
 
+run: $(BUILD_DIR)/$(TARGET_EXEC)
+	$(BUILD_DIR)/$(TARGET_EXEC)
+
 clean:
 	rm -r $(BUILD_DIR)
