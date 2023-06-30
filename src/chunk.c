@@ -60,7 +60,7 @@ int getLine(Chunk* chunk, int offset) {
     for (int i = 0; i < chunk->linesCount; i++) {
         currentOffset += chunk->lines[i].length;
         if (currentOffset > offset) {
-            return chunk->lines[i - 1].line;
+            return chunk->lines[i].line;
         }
     }
 
