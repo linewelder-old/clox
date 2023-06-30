@@ -18,6 +18,10 @@ void initScanner(const char* source) {
     scanner.line = 1;
 }
 
+static bool isDigit(char c) {
+    return c >= '0' && c <= '9';
+}
+
 static bool isAtEnd() {
     return *scanner.current == '\0';
 }
@@ -87,6 +91,18 @@ static void skipWhitespace() {
     }
 }
 
+static Token number() {
+    while (isDigit(peek())) advance();
+
+    if (peek() == '.' && isDigit(peekNext())) {
+        advance();
+
+        while (isDigit(peek())) advance();
+    }
+
+    return makeToken(TOKEN_NUMBER);
+}
+
 static Token string() {
     while (peek() != '"' && !isAtEnd()) {
         if (peek() == '\n') scanner.line++;
@@ -106,6 +122,8 @@ Token scanToken() {
     if (isAtEnd()) return makeToken(TOKEN_EOF);
 
     char c = advance();
+    if (isDigit(c)) return number();
+
     switch (c) {
         case '(': return makeToken(TOKEN_LEFT_PAREN);
         case ')': return makeToken(TOKEN_RIGHT_PAREN);
