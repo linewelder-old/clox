@@ -49,9 +49,10 @@ static InterpretResult run() {
     ])
 #define BINARY_OP(op) \
     do { \
-        double b = pop(); \
-        double a = pop(); \
-        push(a op b); \
+        vm.stackTop--; \
+        double b = vm.stackTop[1]; \
+        double a = vm.stackTop[0]; \
+        *vm.stackTop = a op b; \
     } while (false)
 
     for (;;) {
@@ -82,7 +83,7 @@ static InterpretResult run() {
             case OP_SUBTRACT: BINARY_OP(-); break;
             case OP_MULTIPLY: BINARY_OP(*); break;
             case OP_DIVIDE:   BINARY_OP(/); break;
-            case OP_NEGATE:   push(-pop()); break;
+            case OP_NEGATE:   *vm.stackTop = -*vm.stackTop; break;
             case OP_RETURN: {
                 printValue(pop());
                 printf("\n");
