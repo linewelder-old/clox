@@ -3,14 +3,6 @@
 #include "debug.h"
 #include "value.h"
 
-void disassembleChunk(Chunk* chunk, const char* name) {
-    printf("== %s ==\n", name);
-
-    for (int offset = 0; offset < chunk-> count;) {
-        offset = disassembleInstruction(chunk, offset);
-    }
-}
-
 static int simpleInstruction(const char* name, int offset) {
     printf("%s\n", name);
     return offset + 1;
@@ -24,12 +16,13 @@ static int constantInstruction(const char* name, Chunk* chunk, int offset) {
     return offset + 2;
 }
 
-int disassembleInstruction(Chunk* chunk, int offset) {
+// line = -1 means the line is the same as for the previous instruction.
+static int disassembleInstruction_(Chunk* chunk, int offset, int line) {
     printf("%04d ", offset);
-    if (offset > 0 && chunk->lines[offset] == chunk->lines[offset - 1]) {
+    if (line < 0) {
         printf("   | ");
     } else {
-        printf("%4d ", chunk->lines[offset]);
+        printf("%4d ", line);
     }
 
     uint8_t instruction = chunk->code[offset];
@@ -44,3 +37,26 @@ int disassembleInstruction(Chunk* chunk, int offset) {
     }
 }
 
+int disassembleInstruction(Chunk* chunk, int offset) {
+    disassembleInstruction_(chunk, offset, getLine(chunk, offset));
+}
+
+void disassembleChunk(Chunk* chunk, const char* name) {
+    printf("== %s ==\n", name);
+    if (chunk->count == 0) return;
+
+    LineEntry* currentLinePtr = chunk->lines;
+    int currentLine = currentLinePtr->line;
+    int endOffset = currentLinePtr->length;
+
+    for (int offset = 0; offset < chunk->count;) {
+        offset = disassembleInstruction_(chunk, offset, currentLine);
+        currentLine = -1;
+
+        if (offset == endOffset) {
+            currentLinePtr++;
+            currentLine = currentLinePtr->line;
+            endOffset += currentLinePtr->length;
+        }
+    }
+}
