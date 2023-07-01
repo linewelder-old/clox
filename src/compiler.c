@@ -137,6 +137,15 @@ static void binary() {
     }
 }
 
+static void literal() {
+    switch (parser.previous.type) {
+        case TOKEN_FALSE: emitByte(OP_FALSE); break;
+        case TOKEN_NIL:   emitByte(OP_NIL); break;
+        case TOKEN_TRUE:  emitByte(OP_TRUE); break;
+        default: return; // Unreachable.
+    }
+}
+
 static void grouping() {
     expression();
     consume(TOKEN_RIGHT_PAREN, "Expect ')' after expression.");
@@ -159,6 +168,9 @@ static void unary() {
 }
 
 ParseRule rules[] = {
+    [TOKEN_FALSE]      = {literal,  NULL,   PREC_NONE},
+    [TOKEN_NIL]        = {literal,  NULL,   PREC_NONE},
+    [TOKEN_TRUE]       = {literal,  NULL,   PREC_NONE},
     [TOKEN_LEFT_PAREN] = {grouping, NULL,   PREC_NONE},
     [TOKEN_MINUS]      = {unary,    binary, PREC_TERM},
     [TOKEN_PLUS]       = {NULL,     binary, PREC_TERM},
