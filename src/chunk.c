@@ -67,7 +67,7 @@ int getLine(Chunk* chunk, int offset) {
     return -1;
 }
 
-void writeConstant(Chunk* chunk, Value value, int line) {
+int writeConstant(Chunk* chunk, Value value, int line) {
     int constant = addConstant(chunk, value);
     if (constant < 256) {
         writeChunk(chunk, OP_CONSTANT, line);
@@ -78,4 +78,6 @@ void writeConstant(Chunk* chunk, Value value, int line) {
         writeChunk(chunk, (constant & 0x00FF00) >> 8, line);
         writeChunk(chunk, (constant & 0xFF0000) >> 16, line);
     }
+
+    return constant;
 }

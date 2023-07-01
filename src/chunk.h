@@ -4,6 +4,8 @@
 #include "common.h"
 #include "value.h"
 
+#define CONSTANT_ID_MAX 0xFFFFFF
+
 typedef enum {
     OP_CONSTANT,
     OP_CONSTANT_LONG,
@@ -39,6 +41,6 @@ void writeChunk(Chunk* chunk, uint8_t byte, int line);
 int getLine(Chunk* chunk, int offset);
 
 int addConstant(Chunk* chunk, Value value);
-void writeConstant(Chunk* chunk, Value value, int line);
+int writeConstant(Chunk* chunk, Value value, int line);
 
 #endif

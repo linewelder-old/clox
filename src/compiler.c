@@ -77,8 +77,20 @@ static void emitReturn() {
     emitByte(OP_RETURN);
 }
 
+static void emitConstant(Value value) {
+    int constant = writeConstant(currentChunk(), value, parser.previous.line);
+    if (constant > CONSTANT_ID_MAX) {
+        error("Too many constants in one chunk.");
+    }
+}
+
 static void endCompiler() {
     emitReturn();
+}
+
+static void number() {
+    double value = strtod(parser.previous.start, NULL);
+    emitConstant(value);
 }
 
 bool compile(const char* source, Chunk* chunk) {
