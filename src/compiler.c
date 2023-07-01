@@ -162,6 +162,12 @@ static void number() {
     emitConstant(NUMBER_VAL(value));
 }
 
+static void string() {
+    ObjString* str = copyString(parser.previous.start + 1,
+                                parser.previous.length - 2);
+    emitConstant(OBJ_VAL(str));
+}
+
 static void unary() {
     TokenType operatorType = parser.previous.type;
 
@@ -190,6 +196,7 @@ ParseRule rules[] = {
     [TOKEN_GREATER_EQUAL] = {NULL,     binary, PREC_COMPARISON},
     [TOKEN_LESS]          = {NULL,     binary, PREC_COMPARISON},
     [TOKEN_LESS_EQUAL]    = {NULL,     binary, PREC_COMPARISON},
+    [TOKEN_STRING]        = {string,   NULL,   PREC_NONE},
     [TOKEN_NUMBER]        = {number,   NULL,   PREC_NONE},
     [TOKEN_EOF]           = {NULL,     NULL,   PREC_NONE},
 };
