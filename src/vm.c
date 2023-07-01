@@ -31,10 +31,12 @@ static void runtimeError(const char* format, ...) {
 
 void initVM() {
     resetStack();
+    vm.objects = NULL;
 }
 
 void freeVM() {
     FREE_ARRAY(Value, vm.stack, vm.stackEnd - vm.stack);
+    freeObjects();
 }
 
 void push(Value value) {
