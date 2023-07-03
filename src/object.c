@@ -18,10 +18,20 @@ static Obj* allocateObject(size_t size, ObjType type) {
     return object;
 }
 
+static uint32_t hashString(const char* key, int length) {
+    uint32_t hash = 2166136261u;
+    for (int i = 0; i < length; i++) {
+        hash ^= (uint8_t)key[i];
+        hash *= 16777619;
+    }
+    return hash;
+}
+
 static ObjString* allocateString(char* chars, int length) {
     ObjString* string = ALLOCATE_OBJ(ObjString, OBJ_STRING);
     string->length = length;
     string->chars = chars;
+    string->hash = hashString(string->chars, string->length);
     return string;
 }
 
