@@ -168,9 +168,12 @@ static InterpretResult run() {
                 vm.stackTop[-1] = NUMBER_VAL(-AS_NUMBER(operand));
                 break;
             }
-            case OP_RETURN: {
+            case OP_PRINT: {
                 printValue(pop());
                 printf("\n");
+                break;
+            }
+            case OP_RETURN: {
                 return INTERPRET_OK;
             }
         }
