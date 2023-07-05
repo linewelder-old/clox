@@ -71,6 +71,16 @@ static Token errorToken(const char* message) {
     return makeTokenWithMessage(TOKEN_ERROR, message);
 }
 
+static Token eofToken() {
+    return (Token){
+        .type = TOKEN_EOF,
+        .start = scanner.start,
+        .errorMessage = NULL,
+        .length = 1,
+        .line = scanner.line,
+    };
+}
+
 static void skipWhitespace() {
     for (;;) {
         char c = peek();
@@ -170,10 +180,16 @@ static Token string() {
 }
 
 Token scanToken() {
+    const char* startChar = scanner.current;
+    int startLine = scanner.line;
     skipWhitespace();
-    scanner.start = scanner.current;
+    if (isAtEnd()) {
+        scanner.start = startChar;
+        scanner.line = startLine;
+        return eofToken();
+    }
 
-    if (isAtEnd()) return makeToken(TOKEN_EOF);
+    scanner.start = scanner.current;
 
     char c = advance();
     if (isAlpha(c)) return identifier();
