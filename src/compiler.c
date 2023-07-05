@@ -10,6 +10,7 @@
 #endif
 
 typedef struct {
+    const char* source;
     Token current;
     Token previous;
     bool hadError;
@@ -45,6 +46,17 @@ static Chunk* currentChunk() {
     return compilingChunk;
 }
 
+static const char* findLine(int line) {
+    const char* start = parser.source;
+    int currentLine = 1;
+    while (currentLine < line && *start != '\0') {
+        if (*start == '\n') currentLine++;
+        start++;
+    }
+
+    return start;
+}
+
 static void errorAt(Token* token, const char* message) {
     if (parser.panicMode) return;
     parser.panicMode = true;
@@ -59,6 +71,24 @@ static void errorAt(Token* token, const char* message) {
     }
 
     fprintf(stderr, ": %s\n", message);
+
+    const char* lineStart = findLine(token->line);
+    fprintf(stderr, "%3d | ", token->line);
+    for (const char* ch = lineStart; *ch != '\0' && *ch != '\n'; ch++) {
+        putc(*ch, stderr);
+    }
+    putc('\n', stderr);
+
+    int offset = token->start - lineStart;
+    fprintf(stderr, "    | ");
+    for (int i = 0; i < offset; i++) {
+        putc(' ', stderr);
+    }
+    for (int i = 0; i < token->length; i++) {
+        putc('~', stderr);
+    }
+    putc('\n', stderr);
+
     parser.hadError = true;
 }
 
@@ -343,6 +373,7 @@ static void declaration() {
 }
 
 bool compile(const char* source, Chunk* chunk) {
+    parser.source = source;
     initScanner(source);
     compilingChunk = chunk;
 
