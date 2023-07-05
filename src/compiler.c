@@ -62,12 +62,10 @@ static void errorAt(Token* token, const char* message) {
     parser.panicMode = true;
     fprintf(stderr, "[line %d] Error", token ->line);
 
-    switch (token->type) {
-        case TOKEN_EOF: fprintf(stderr, " at end"); break;
-        case TOKEN_ERROR: break;
-        default:
-            fprintf(stderr, " at '%.*s'", token->length, token->start);
-            break;
+    if (token->type == TOKEN_EOF) {
+        fprintf(stderr, " at end");
+    } else {
+        fprintf(stderr, " at '%.*s'", token->length, token->start);
     }
 
     fprintf(stderr, ": %s\n", message);
@@ -107,7 +105,7 @@ static void advance() {
         parser.current = scanToken();
         if (parser.current.type != TOKEN_ERROR) break;
 
-        errorAtCurrent(parser.current.start);
+        errorAtCurrent(parser.current.errorMessage);
     }
 }
 

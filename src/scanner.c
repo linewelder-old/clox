@@ -53,22 +53,22 @@ static bool match(char expected) {
     return true;
 }
 
-static Token makeToken(TokenType type) {
+static Token makeTokenWithMessage(TokenType type, const char* message) {
     return (Token){
         .type = type,
         .start = scanner.start,
+        .errorMessage = message,
         .length = (int)(scanner.current - scanner.start),
         .line = scanner.line,
     };
 }
 
+static Token makeToken(TokenType type) {
+    return makeTokenWithMessage(type, NULL);
+}
+
 static Token errorToken(const char* message) {
-    return (Token){
-        .type = TOKEN_ERROR,
-        .start = message,
-        .length = (int)strlen(message),
-        .line = scanner.line,
-    };
+    return makeTokenWithMessage(TOKEN_ERROR, message);
 }
 
 static void skipWhitespace() {
@@ -202,5 +202,5 @@ Token scanToken() {
         case '"': return string();
     }
 
-    return errorToken("Unexpected characteer.");
+    return errorToken("Unexpected character.");
 }
