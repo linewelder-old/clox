@@ -87,11 +87,9 @@ static void concatenate() {
 
 static InterpretResult run() {
 #define READ_BYTE() (*vm.ip++)
+#define READ_LONG() (READ_BYTE() | (READ_BYTE() << 8) | (READ_BYTE() << 16))
 #define READ_CONSTANT() (vm.chunk->constants.values[READ_BYTE()])
-#define READ_CONSTANT_LONG() \
-    (vm.chunk->constants.values[ \
-        READ_BYTE() | (READ_BYTE() << 8) | (READ_BYTE() << 16) \
-    ])
+#define READ_CONSTANT_LONG() (vm.chunk->constants.values[READ_LONG()])
 #define READ_STRING() AS_STRING(READ_CONSTANT())
 #define BINARY_OP(valueType, op) \
     do { \
@@ -142,6 +140,16 @@ static InterpretResult run() {
             }
             case OP_SET_LOCAL: {
                 uint8_t slot = READ_BYTE();
+                vm.stack[slot] = peek(0);
+                break;
+            }
+            case OP_GET_LOCAL_LNG: {
+                int slot = READ_LONG();
+                push(vm.stack[slot]);
+                break;
+            }
+            case OP_SET_LOCAL_LNG: {
+                int slot = READ_LONG();
                 vm.stack[slot] = peek(0);
                 break;
             }
@@ -219,6 +227,7 @@ static InterpretResult run() {
     }
 
 #undef READ_BYTE
+#undef READ_LONG
 #undef READ_CONSTANT
 #undef READ_CONSTANT_LONG
 #undef READ_STRING

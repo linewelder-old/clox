@@ -147,6 +147,10 @@ static void emitByte(uint8_t byte) {
     writeChunk(currentChunk(), byte, parser.previous.line);
 }
 
+static void emitLong(int value) {
+    writeLong(currentChunk(), value, parser.previous.line);
+}
+
 static void emitBytes(uint8_t byte1, uint8_t byte2) {
     emitByte(byte1);
     emitByte(byte2);
@@ -233,7 +237,7 @@ static int resolveLocal(Compiler* compiler, Token* name) {
 }
 
 static void addLocal(Token name) {
-    if (current->localCount == UINT8_COUNT) {
+    if (current->localCount == MAX_LOCALS) {
         error("Too many local variables in function.");
         return;
     }
@@ -316,20 +320,31 @@ static void string(bool canAssign) {
 static void namedVariable(Token name, bool canAssign) {
     uint8_t getOp, setOp;
     int arg = resolveLocal(current, &name);
-    if (arg != -1) {
-        getOp = OP_GET_LOCAL;
-        setOp = OP_SET_LOCAL;
-    } else {
-        arg = identifierConstant(&name);
-        getOp = OP_GET_GLOBAL;
-        setOp = OP_SET_GLOBAL;
-    }
 
-    if (canAssign && match(TOKEN_EQUAL)) {
-        expression();
-        emitBytes(setOp, (uint8_t)arg);
+    bool isAssignment = canAssign && match(TOKEN_EQUAL);
+    if (isAssignment) expression();
+
+    bool isGlobal = arg == -1;
+    if (isGlobal) {
+        arg = identifierConstant(&name);
+        if (isAssignment) {
+            emitBytes(OP_SET_GLOBAL, (uint8_t)arg);
+        } else {
+            emitBytes(OP_GET_GLOBAL, (uint8_t)arg);
+        }
+    } else if (arg < 256) {
+        if (isAssignment) {
+            emitBytes(OP_SET_LOCAL, (uint8_t)arg);
+        } else {
+            emitBytes(OP_GET_LOCAL, (uint8_t)arg);
+        }
     } else {
-        emitBytes(getOp, (uint8_t)arg);
+        if (isAssignment) {
+            emitByte(OP_SET_LOCAL_LNG);
+        } else {
+            emitByte(OP_GET_LOCAL_LNG);
+        }
+        emitLong(arg);
     }
 }
 

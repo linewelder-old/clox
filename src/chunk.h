@@ -15,6 +15,8 @@ typedef enum {
     OP_POP,
     OP_GET_LOCAL,
     OP_SET_LOCAL,
+    OP_GET_LOCAL_LNG,
+    OP_SET_LOCAL_LNG,
     OP_GET_GLOBAL,
     OP_DEFINE_GLOBAL,
     OP_SET_GLOBAL,
@@ -51,6 +53,7 @@ typedef struct {
 void initChunk(Chunk* chunk);
 void freeChunk(Chunk* chunk);
 void writeChunk(Chunk* chunk, uint8_t byte, int line);
+void writeLong(Chunk* chunk, int value, int line);
 
 int getLine(Chunk* chunk, int offset);
 

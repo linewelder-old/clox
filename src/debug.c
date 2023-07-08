@@ -14,6 +14,18 @@ static int byteInstruction(const char* name, Chunk* chunk, int offset) {
     return offset + 2;
 }
 
+static int readLongParameter(Chunk* chunk, int offset) {
+    return chunk->code[offset + 1] |
+           chunk->code[offset + 2] << 8 |
+           chunk->code[offset + 3] << 16;
+}
+
+static int longInstruction(const char* name, Chunk* chunk, int offset) {
+    int slot = readLongParameter(chunk, offset);
+    printf("%-16s %d\n", name, slot);
+    return offset + 4;
+}
+
 static int constantInstruction(const char* name, Chunk* chunk, int offset) {
     uint8_t constant = chunk->code[offset + 1];
     printf("%-16s %d '", name, constant);
@@ -23,9 +35,7 @@ static int constantInstruction(const char* name, Chunk* chunk, int offset) {
 }
 
 static int constantLongInstruction(const char* name, Chunk* chunk, int offset) {
-    int constant = chunk->code[offset + 1] |
-                   chunk->code[offset + 2] << 8 |
-                   chunk->code[offset + 3] << 16;
+    int constant = readLongParameter(chunk, offset);
     printf("%-16s %d '", name, constant);
     printValue(chunk->constants.values[constant]);
     printf("'\n");
@@ -67,6 +77,10 @@ static int disassembleInstruction_(Chunk* chunk, int offset, int line) {
             return byteInstruction("OP_GET_LOCAL", chunk, offset);
         case OP_SET_LOCAL:
             return byteInstruction("OP_SET_LOCAL", chunk, offset);
+        case OP_GET_LOCAL_LNG:
+            return longInstruction("OP_GET_LOCAL_LNG", chunk, offset);
+        case OP_SET_LOCAL_LNG:
+            return longInstruction("OP_SET_LOCAL_LNG", chunk, offset);
         case OP_GREATER:
             return simpleInstruction("OP_GREATER", offset);
         case OP_LESS:
