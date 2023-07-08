@@ -91,6 +91,7 @@ static InterpretResult run() {
 #define READ_CONSTANT() (vm.chunk->constants.values[READ_BYTE()])
 #define READ_CONSTANT_LONG() (vm.chunk->constants.values[READ_LONG()])
 #define READ_STRING() AS_STRING(READ_CONSTANT())
+#define READ_STRING_LONG() AS_STRING(READ_CONSTANT_LONG())
 #define BINARY_OP(valueType, op) \
     do { \
         Value valB = peek(0); \
@@ -153,14 +154,22 @@ static InterpretResult run() {
                 vm.stack[slot] = peek(0);
                 break;
             }
+#define GET_GLOBAL(name) \
+    Value value; \
+    if (!tableGet(&vm.globals, name, &value)) { \
+        runtimeError("Undefined variable '%s'.", name->chars); \
+        return INTERPRET_RUNTIME_ERROR; \
+    } \
+    push(value);
+#define SET_GLOBAL(name) \
+    if (tableSet(&vm.globals, name, peek(0))) { \
+        tableDelete(&vm.globals, name); \
+        runtimeError("Undefined variable '%s'.", name->chars); \
+        return INTERPRET_RUNTIME_ERROR; \
+    }
             case OP_GET_GLOBAL: {
                 ObjString* name = READ_STRING();
-                Value value;
-                if (!tableGet(&vm.globals, name, &value)) {
-                    runtimeError("Undefined variable '%s'.", name->chars);
-                    return INTERPRET_RUNTIME_ERROR;
-                }
-                push(value);
+                GET_GLOBAL(name);
                 break;
             }
             case OP_DEFINE_GLOBAL: {
@@ -171,13 +180,27 @@ static InterpretResult run() {
             }
             case OP_SET_GLOBAL: {
                 ObjString* name = READ_STRING();
-                if (tableSet(&vm.globals, name, peek(0))) {
-                    tableDelete(&vm.globals, name);
-                    runtimeError("Undefined variable '%s'.", name->chars);
-                    return INTERPRET_RUNTIME_ERROR;
-                }
+                SET_GLOBAL(name);
                 break;
             }
+            case OP_GET_GLOBL_LNG: {
+                ObjString* name = READ_STRING_LONG();
+                GET_GLOBAL(name);
+                break;
+            }
+            case OP_DEF_GLOBL_LNG: {
+                ObjString* name = READ_STRING_LONG();
+                tableSet(&vm.globals, name, peek(0));
+                pop();
+                break;
+            }
+            case OP_SET_GLOBL_LNG: {
+                ObjString* name = READ_STRING_LONG();
+                SET_GLOBAL(name);
+                break;
+            }
+#undef GET_GLOBAL
+#undef SET_GLOBAL
             case OP_EQUAL: {
                 Value b = peek(0);
                 Value a = peek(1);

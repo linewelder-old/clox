@@ -325,26 +325,32 @@ static void namedVariable(Token name, bool canAssign) {
     if (isAssignment) expression();
 
     bool isGlobal = arg == -1;
+    if (isGlobal) arg = identifierConstant(&name);
+
+    bool isLong = arg >= 256;
     if (isGlobal) {
-        arg = identifierConstant(&name);
-        if (isAssignment) {
-            emitBytes(OP_SET_GLOBAL, (uint8_t)arg);
+        if (isLong) {
+            getOp = OP_GET_GLOBL_LNG;
+            setOp = OP_SET_GLOBL_LNG;
         } else {
-            emitBytes(OP_GET_GLOBAL, (uint8_t)arg);
-        }
-    } else if (arg < 256) {
-        if (isAssignment) {
-            emitBytes(OP_SET_LOCAL, (uint8_t)arg);
-        } else {
-            emitBytes(OP_GET_LOCAL, (uint8_t)arg);
+            getOp = OP_GET_GLOBAL;
+            setOp = OP_SET_GLOBAL;
         }
     } else {
-        if (isAssignment) {
-            emitByte(OP_SET_LOCAL_LNG);
+        if (isLong) {
+            getOp = OP_GET_LOCAL_LNG;
+            setOp = OP_SET_LOCAL_LNG;
         } else {
-            emitByte(OP_GET_LOCAL_LNG);
+            getOp = OP_GET_LOCAL;
+            setOp = OP_SET_LOCAL;
         }
+    }
+
+    emitByte(isAssignment ? setOp : getOp);
+    if (isLong) {
         emitLong(arg);
+    } else {
+        emitByte((uint8_t)arg);
     }
 }
 
@@ -408,7 +414,7 @@ static void parsePrecedence(Precedence precedence) {
     }
 }
 
-static uint8_t parseVariable(const char* errorMessage) {
+static int parseVariable(const char* errorMessage) {
     consume(TOKEN_IDENTIFIER, errorMessage);
 
     declareVariable();
@@ -421,13 +427,18 @@ static void markInitialized() {
     current->locals[current->localCount - 1].depth = current->scopeDepth;
 }
 
-static void defineVariable(uint8_t global) {
+static void defineVariable(int global) {
     if (current->scopeDepth > 0) {
         markInitialized();
         return;
     }
 
-    emitBytes(OP_DEFINE_GLOBAL, global);
+    if (global < 256) {
+        emitBytes(OP_DEFINE_GLOBAL, (uint8_t)global);
+    } else {
+        emitByte(OP_DEF_GLOBL_LNG);
+        emitLong(global);
+    }
 }
 
 static ParseRule* getRule(TokenType type) {
@@ -447,7 +458,7 @@ static void block() {
 }
 
 static void varDeclaration() {
-    uint8_t global = parseVariable("Expect variable name.");
+    int global = parseVariable("Expect variable name.");
 
     if (match(TOKEN_EQUAL)) {
         expression();
