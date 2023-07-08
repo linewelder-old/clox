@@ -4,6 +4,7 @@
 
 #include "common.h"
 #include "compiler.h"
+#include "memory.h"
 #include "scanner.h"
 
 #ifdef DEBUG_PRINT_CODE
@@ -46,8 +47,9 @@ typedef struct {
 } Local;
 
 typedef struct {
-    Local locals[UINT8_COUNT];
+    Local* locals;
     int localCount;
+    int localCapacity;
     int scopeDepth;
 } Compiler;
 
@@ -169,13 +171,16 @@ static void emitConstant(Value value) {
 }
 
 static void initCompiler(Compiler* compiler) {
+    compiler->locals = NULL;
     compiler->localCount = 0;
+    compiler->localCapacity = 0;
     compiler->scopeDepth = 0;
     current = compiler;
 }
 
 static void endCompiler() {
     emitReturn();
+    FREE_ARRAY(Local, current->locals, current->localCapacity);
 #ifdef DEBUG_PRINT_CODE
     if (!parser.hadError) {
         disassembleChunk(currentChunk(), "code");
@@ -231,6 +236,13 @@ static void addLocal(Token name) {
     if (current->localCount == UINT8_COUNT) {
         error("Too many local variables in function.");
         return;
+    }
+
+    if (current->localCapacity < current->localCount + 1) {
+        int oldCapacity = current->localCapacity;
+        current->localCapacity = GROW_CAPACITY(oldCapacity);
+        current->locals = GROW_ARRAY(Local, current->locals,
+                                     oldCapacity, current->localCapacity);
     }
 
     Local* local = &current->locals[current->localCount++];
