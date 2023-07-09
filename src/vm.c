@@ -87,7 +87,8 @@ static void concatenate() {
 
 static InterpretResult run() {
 #define READ_BYTE() (*vm.ip++)
-#define READ_LONG() (READ_BYTE() | (READ_BYTE() << 8) | (READ_BYTE() << 16))
+#define READ_LONG() \
+    (vm.ip += 3, (int)((vm.ip[-1] << 16) | (vm.ip[-2] << 8) | vm.ip[-3]))
 #define READ_CONSTANT() (vm.chunk->constants.values[READ_BYTE()])
 #define READ_CONSTANT_LONG() (vm.chunk->constants.values[READ_LONG()])
 #define READ_STRING() AS_STRING(READ_CONSTANT())
