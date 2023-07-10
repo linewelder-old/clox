@@ -593,6 +593,74 @@ static void printStatement() {
     emitByte(OP_PRINT);
 }
 
+static void switchStatement() {
+    consume(TOKEN_LEFT_PAREN, "Expect '(' after 'switch'.");
+    expression();
+    consume(TOKEN_RIGHT_PAREN, "Expect ')' after condition.");
+
+    int skipExitJump = emitJump(OP_JUMP);
+    int exitJumpLocation = currentChunk()->count;
+    int exitJump = emitJump(OP_JUMP);
+    patchJump(skipExitJump);
+
+    consume(TOKEN_LEFT_BRACE, "Expect '{' before switch body.");
+
+    if (!check(TOKEN_CASE) && !check(TOKEN_DEFAULT) &&
+        !check(TOKEN_RIGHT_BRACE)) {
+        errorAtCurrent("Expect 'case' or 'default' before any statements.");
+    }
+
+    int skipJump = -1;
+    bool inDefault = false;
+    while (!check(TOKEN_RIGHT_BRACE) && !check(TOKEN_EOF)) {
+        if (match(TOKEN_CASE)) {
+            if (inDefault) {
+                error("Default case must be the last one.");
+            }
+
+            if (skipJump >= 0) {
+                emitLoop(exitJumpLocation);
+                patchJump(skipJump);
+                emitByte(OP_POP);
+            }
+
+            emitByte(OP_DUPLICATE);
+            expression();
+            emitByte(OP_EQUAL);
+
+            skipJump = emitJump(OP_JUMP_IF_FALSE);
+            emitByte(OP_POP);
+            consume(TOKEN_COLON, "Expect ':' after case expression.");
+        } else if (match(TOKEN_DEFAULT)) {
+            if (inDefault) {
+                error("Multiple default cases.");
+            }
+
+            if (skipJump >= 0) {
+                emitLoop(exitJumpLocation);
+                patchJump(skipJump);
+                emitByte(OP_POP);
+
+                skipJump = -1;
+            }
+
+            consume(TOKEN_COLON, "Expect ':' after 'default'.");
+            inDefault = true;
+        } else {
+            statement();
+        }
+    }
+
+    consume(TOKEN_RIGHT_BRACE, "Expect '}' after switch body.");
+
+    if (skipJump >= 0) {
+        patchJump(skipJump);
+        emitByte(OP_POP);
+    }
+    patchJump(exitJump);
+    emitByte(OP_POP);
+}
+
 static void whileStatement() {
     int loopStart = currentChunk()->count;
     consume(TOKEN_LEFT_PAREN, "Expect '(' after 'while'.");
@@ -635,6 +703,8 @@ static void statement() {
         forStatement();
     } else if (match(TOKEN_IF)) {
         ifStatement();
+    } else if (match(TOKEN_SWITCH)) {
+        switchStatement();
     } else if (match(TOKEN_WHILE)) {
         whileStatement();
     } else if (match(TOKEN_LEFT_BRACE)) {
