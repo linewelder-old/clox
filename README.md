@@ -25,3 +25,40 @@ the language.
   The stack grows to accomodate all the values pushed to it.
 
   __TODO: when functions are added, add checks to prevent infinite recursion.__
+
+- Switch statements
+
+  The following code:
+
+  ```javascript
+  // Prints "Correct!".
+  switch (2 + 2) {
+      case 4:
+          print "Correct!";
+      case 5:
+          print "Will not run";
+          print 1 / 0;
+      default:
+          print "The default case";
+  }
+  ```
+
+  Is semantically equivalent to this:
+
+  ```javascript
+  {
+      var temp = 2 + 2;
+      if (temp == 4) {
+          print "Correct!";
+      } else if (temp == 5) {
+          print "Will not run";
+          print 1 / 0;
+      } else {
+          print "The default case";
+      }
+  }
+  ```
+
+  _Note: unlike in most other languages, this switch statement allows for any
+  expressions in `case` clauses, does not allow fallthroughs and thus does not
+  require `break;`s at the end of each case._
