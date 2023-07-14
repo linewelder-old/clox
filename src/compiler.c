@@ -46,7 +46,15 @@ typedef struct {
     int depth;
 } Local;
 
+typedef enum {
+    TYPE_FUNCTION,
+    TYPE_SCRIPT,
+} FunctionType;
+
 typedef struct {
+    ObjFunction* function;
+    FunctionType type;
+
     Local* locals;
     int localCount;
     int localCapacity;
@@ -57,10 +65,9 @@ typedef struct {
 
 Parser parser;
 Compiler* current = NULL;
-Chunk* compilingChunk;
 
 static Chunk* currentChunk() {
-    return compilingChunk;
+    return &current->function->chunk;
 }
 
 static const char* findLine(int line) {
@@ -205,24 +212,33 @@ static void patchJump(int offset) {
     currentChunk()->code[offset + 1] = (jump >> 8) & 0xff;
 }
 
-static void initCompiler(Compiler* compiler) {
+static void initCompiler(Compiler* compiler, FunctionType type) {
+    compiler->function = NULL;
+    compiler->type = type;
+
     compiler->locals = NULL;
     compiler->localCount = 0;
     compiler->localCapacity = 0;
     compiler->scopeDepth = 0;
+    compiler->function = newFunction();
 
     compiler->loopContinueOffset = -1;
     current = compiler;
 }
 
-static void endCompiler() {
+static ObjFunction* endCompiler() {
     emitReturn();
+    ObjFunction* function = current->function;
+
     FREE_ARRAY(Local, current->locals, current->localCapacity);
 #ifdef DEBUG_PRINT_CODE
     if (!parser.hadError) {
-        disassembleChunk(currentChunk(), "code");
+        disassembleChunk(currentChunk(), function->name != NULL
+            ? function->name->chars : "<script>");
     }
 #endif
+
+    return function;
 }
 
 static void beginScope() {
@@ -749,12 +765,11 @@ static void declaration() {
     if (parser.panicMode) synchronize();
 }
 
-bool compile(const char* source, Chunk* chunk) {
+ObjFunction* compile(const char* source) {
     parser.source = source;
     initScanner(source);
     Compiler compiler;
-    initCompiler(&compiler);
-    compilingChunk = chunk;
+    initCompiler(&compiler, TYPE_SCRIPT);
 
     parser.hadError = false;
     parser.panicMode = false;
@@ -765,7 +780,6 @@ bool compile(const char* source, Chunk* chunk) {
         declaration();
     }
 
-    consume(TOKEN_EOF, "Expect end of expression.");
-    endCompiler();
-    return !parser.hadError;
+    ObjFunction* function = endCompiler();
+    return parser.hadError ? NULL : function;
 }
