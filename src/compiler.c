@@ -51,6 +51,8 @@ typedef struct {
     int localCount;
     int localCapacity;
     int scopeDepth;
+
+    int loopContinueOffset; // -1 if not in a loop.
 } Compiler;
 
 Parser parser;
@@ -208,6 +210,8 @@ static void initCompiler(Compiler* compiler) {
     compiler->localCount = 0;
     compiler->localCapacity = 0;
     compiler->scopeDepth = 0;
+
+    compiler->loopContinueOffset = -1;
     current = compiler;
 }
 
@@ -527,6 +531,16 @@ static void expressionStatement() {
     emitByte(OP_POP);
 }
 
+static void continueStatement() {
+    int jumpOffset = current->loopContinueOffset;
+    if (jumpOffset < 0) {
+        error("Can't continue outside loop.");
+    }
+
+    emitLoop(jumpOffset);
+    consume(TOKEN_SEMICOLON, "Expect ';' after 'continue'.");
+}
+
 static void forStatement() {
     beginScope();
     consume(TOKEN_LEFT_PAREN, "Expect '(' after 'for'.");
@@ -560,7 +574,10 @@ static void forStatement() {
         patchJump(bodyJump);
     }
 
+    int previousContinueOffset = current->loopContinueOffset;
+    current->loopContinueOffset = loopStart;
     statement();
+    current->loopContinueOffset = previousContinueOffset;
     emitLoop(loopStart);
 
     if (exitJump != -1) {
@@ -669,7 +686,11 @@ static void whileStatement() {
 
     int exitJump = emitJump(OP_JUMP_IF_FALSE);
     emitByte(OP_POP);
+
+    int previousContinueOffset = current->loopContinueOffset;
+    current->loopContinueOffset = loopStart;
     statement();
+    current->loopContinueOffset = previousContinueOffset;
     emitLoop(loopStart);
 
     patchJump(exitJump);
@@ -699,6 +720,8 @@ static void synchronize() {
 static void statement() {
     if (match(TOKEN_PRINT)) {
         printStatement();
+    } else if (match(TOKEN_CONTINUE)) {
+        continueStatement();
     } else if (match(TOKEN_FOR)) {
         forStatement();
     } else if (match(TOKEN_IF)) {
