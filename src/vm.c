@@ -14,6 +14,7 @@ VM vm;
 static void resetStack() {
     vm.stackTop = vm.stack;
     vm.stackEnd = vm.stack;
+    vm.frameCount = 0;
 }
 
 static void runtimeError(const char* format, ...) {
@@ -23,8 +24,9 @@ static void runtimeError(const char* format, ...) {
     va_end(args);
     fputs("\n", stderr);
 
-    size_t instruction = vm.ip - vm.chunk->code - 1;
-    int line = getLine(vm.chunk, instruction);
+    CallFrame* frame = &vm.frames[vm.frameCount - 1];
+    size_t instruction = frame->ip - frame->function->chunk.code - 1;
+    int line = getLine(&frame->function->chunk, instruction);
     fprintf(stderr, "[line %d] in script\n", line);
     resetStack();
 }
@@ -45,6 +47,8 @@ void freeVM() {
 
 void push(Value value) {
     if (vm.stackEnd <= vm.stackTop) {
+        Value* oldStack = vm.stack;
+
         int stackSize = vm.stackTop - vm.stack;
         int oldCapacity = vm.stackEnd - vm.stack;
 
@@ -52,6 +56,10 @@ void push(Value value) {
         vm.stack = GROW_ARRAY(Value, vm.stack, oldCapacity, newCapacity);
         vm.stackTop = vm.stack + stackSize;
         vm.stackEnd = vm.stack + newCapacity;
+
+        for (int i = 0; i < vm.frameCount; i++) {
+            vm.frames[i].slots += vm.stack - oldStack;
+        }
     }
 
     *vm.stackTop = value;
@@ -86,12 +94,20 @@ static void concatenate() {
 }
 
 static InterpretResult run() {
-#define READ_BYTE() (*vm.ip++)
-#define READ_SHORT() (vm.ip += 2, (uint16_t)((vm.ip[-1] << 8) | vm.ip[-2]))
+    CallFrame* frame = &vm.frames[vm.frameCount - 1];
+
+#define READ_BYTE() (*frame->ip++)
+#define READ_SHORT() \
+    (frame->ip += 2, \
+     (uint16_t)((frame->ip[-1] << 8) | frame->ip[-2]))
 #define READ_LONG() \
-    (vm.ip += 3, (int)((vm.ip[-1] << 16) | (vm.ip[-2] << 8) | vm.ip[-3]))
-#define READ_CONSTANT() (vm.chunk->constants.values[READ_BYTE()])
-#define READ_CONSTANT_LONG() (vm.chunk->constants.values[READ_LONG()])
+    (frame->ip += 3, \
+     (int)((frame->ip[-1] << 16) | (frame->ip[-2] << 8) | frame->ip[-3]))
+
+#define READ_CONSTANT() (frame->function->chunk.constants.values[READ_BYTE()])
+#define READ_CONSTANT_LONG() \
+    (frame->function->chunk.constants.values[READ_LONG()])
+
 #define READ_STRING() AS_STRING(READ_CONSTANT())
 #define READ_STRING_LONG() AS_STRING(READ_CONSTANT_LONG())
 #define BINARY_OP(valueType, op) \
@@ -117,7 +133,8 @@ static InterpretResult run() {
             printf(" ]");
         }
         printf("\n");
-        disassembleInstruction(vm.chunk, (int)(vm.ip - vm.chunk->code));
+        disassembleInstruction(&frame->function->chunk,
+            (int)(frame->ip - frame->function->chunk.code));
 #endif
 
         uint8_t instruction;
@@ -139,22 +156,22 @@ static InterpretResult run() {
             case OP_DUPLICATE: push(peek(0)); break;
             case OP_GET_LOCAL: {
                 uint8_t slot = READ_BYTE();
-                push(vm.stack[slot]);
+                push(frame->slots[slot]);
                 break;
             }
             case OP_SET_LOCAL: {
                 uint8_t slot = READ_BYTE();
-                vm.stack[slot] = peek(0);
+                frame->slots[slot] = peek(0);
                 break;
             }
             case OP_GET_LOCAL_LNG: {
                 int slot = READ_LONG();
-                push(vm.stack[slot]);
+                push(frame->slots[slot]);
                 break;
             }
             case OP_SET_LOCAL_LNG: {
                 int slot = READ_LONG();
-                vm.stack[slot] = peek(0);
+                frame->slots[slot] = peek(0);
                 break;
             }
 #define GET_GLOBAL(name) \
@@ -248,17 +265,17 @@ static InterpretResult run() {
             }
             case OP_JUMP: {
                 uint16_t offset = READ_SHORT();
-                vm.ip += offset;
+                frame->ip += offset;
                 break;
             }
             case OP_JUMP_IF_FALSE: {
                 uint16_t offset = READ_SHORT();
-                if (isFalsey(peek(0))) vm.ip += offset;
+                if (isFalsey(peek(0))) frame->ip += offset;
                 break;
             }
             case OP_LOOP: {
                 uint16_t offset = READ_SHORT();
-                vm.ip -= offset;
+                frame->ip -= offset;
                 break;
             }
             case OP_RETURN: {
@@ -280,8 +297,10 @@ InterpretResult interpret(const char* source) {
     ObjFunction* function = compile(source);
     if (!function) return INTERPRET_COMPILE_ERROR;
 
-    vm.chunk = &function->chunk;
-    vm.ip = vm.chunk->code;
+    CallFrame* frame = &vm.frames[vm.frameCount++];
+    frame->function = function;
+    frame->ip = function->chunk.code;
+    frame->slots = vm.stack;
 
     return run();
 }
