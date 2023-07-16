@@ -218,9 +218,9 @@ static void initCompiler(Compiler* compiler, FunctionType type) {
     compiler->function = NULL;
     compiler->type = type;
 
-    compiler->locals = NULL;
+    compiler->localCapacity = GROW_CAPACITY(0);
+    compiler->locals = ALLOCATE(Local, compiler->localCapacity);
     compiler->localCount = 0;
-    compiler->localCapacity = 0;
     compiler->scopeDepth = 0;
     compiler->function = newFunction();
 
@@ -230,6 +230,11 @@ static void initCompiler(Compiler* compiler, FunctionType type) {
         current->function->name = copyString(parser.previous.start,
                                              parser.previous.length);
     }
+
+    Local* local = &current->locals[current->localCount++];
+    local->depth = 0;
+    local->name.start = "";
+    local->name.length = 0;
 }
 
 static ObjFunction* endCompiler() {
@@ -348,6 +353,26 @@ static void binary(bool canAssign) {
     }
 }
 
+static uint8_t argumentList() {
+    uint8_t argCount = 0;
+    if (!check(TOKEN_RIGHT_PAREN)) {
+        do {
+            expression();
+            if (argCount == 255) {
+                error("Can't have more than 255 arguments.");
+            }
+            argCount++;
+        } while (match(TOKEN_COMMA));
+    }
+    consume(TOKEN_RIGHT_PAREN, "Expect ')' after arguments.");
+    return argCount;
+}
+
+static void call(bool canAssign) {
+    uint8_t argCount = argumentList();
+    emitBytes(OP_CALL, argCount);
+}
+
 static void and_(bool canAssign) {
     int endJump = emitJump(OP_JUMP_IF_FALSE);
 
@@ -451,7 +476,7 @@ ParseRule rules[] = {
     [TOKEN_NIL]           = {literal,  NULL,   PREC_NONE},
     [TOKEN_OR]            = {NULL,     or_,    PREC_OR},
     [TOKEN_TRUE]          = {literal,  NULL,   PREC_NONE},
-    [TOKEN_LEFT_PAREN]    = {grouping, NULL,   PREC_NONE},
+    [TOKEN_LEFT_PAREN]    = {grouping, call,   PREC_CALL},
     [TOKEN_MINUS]         = {unary,    binary, PREC_TERM},
     [TOKEN_PLUS]          = {NULL,     binary, PREC_TERM},
     [TOKEN_SLASH]         = {NULL,     binary, PREC_FACTOR},
