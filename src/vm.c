@@ -18,7 +18,6 @@ static Value clockNative(Value* args) {
 
 static void resetStack() {
     vm.stackTop = vm.stack;
-    vm.stackEnd = vm.stack;
     vm.frameCount = 0;
 }
 
