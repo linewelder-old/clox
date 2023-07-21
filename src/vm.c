@@ -158,14 +158,20 @@ static void concatenate() {
 
 static InterpretResult run() {
     CallFrame* frame = &vm.frames[vm.frameCount - 1];
+    register uint8_t* ip = frame->ip;
 
-#define READ_BYTE() (*frame->ip++)
+#define RUNTIME_ERROR(...) \
+    do { \
+        frame->ip = ip; \
+        runtimeError(__VA_ARGS__); \
+        return INTERPRET_RUNTIME_ERROR; \
+    } while (true);
+
+#define READ_BYTE() (*ip++)
 #define READ_SHORT() \
-    (frame->ip += 2, \
-     (uint16_t)((frame->ip[-1] << 8) | frame->ip[-2]))
+    (ip += 2, (uint16_t)((ip[-1] << 8) | ip[-2]))
 #define READ_LONG() \
-    (frame->ip += 3, \
-     (int)((frame->ip[-1] << 16) | (frame->ip[-2] << 8) | frame->ip[-3]))
+    (ip += 3, (int)((ip[-1] << 16) | (ip[-2] << 8) | ip[-3]))
 
 #define READ_CONSTANT() (frame->function->chunk.constants.values[READ_BYTE()])
 #define READ_CONSTANT_LONG() \
@@ -178,8 +184,7 @@ static InterpretResult run() {
         Value valB = peek(0); \
         Value valA = peek(1); \
         if (!IS_NUMBER(valB) || !IS_NUMBER(valA)) { \
-            runtimeError("Operands must be numbers."); \
-            return INTERPRET_RUNTIME_ERROR; \
+            RUNTIME_ERROR("Operands must be numbers."); \
         } \
         double b = AS_NUMBER(valB); \
         double a = AS_NUMBER(valA); \
@@ -197,7 +202,7 @@ static InterpretResult run() {
         }
         printf("\n");
         disassembleInstruction(&frame->function->chunk,
-            (int)(frame->ip - frame->function->chunk.code));
+            (int)(ip - frame->function->chunk.code));
 #endif
 
         uint8_t instruction;
@@ -240,15 +245,13 @@ static InterpretResult run() {
 #define GET_GLOBAL(name) \
     Value value; \
     if (!tableGet(&vm.globals, name, &value)) { \
-        runtimeError("Undefined variable '%s'.", name->chars); \
-        return INTERPRET_RUNTIME_ERROR; \
+        RUNTIME_ERROR("Undefined variable '%s'.", name->chars); \
     } \
     push(value);
 #define SET_GLOBAL(name) \
     if (tableSet(&vm.globals, name, peek(0))) { \
         tableDelete(&vm.globals, name); \
-        runtimeError("Undefined variable '%s'.", name->chars); \
-        return INTERPRET_RUNTIME_ERROR; \
+        RUNTIME_ERROR("Undefined variable '%s'.", name->chars); \
     }
             case OP_GET_GLOBAL: {
                 ObjString* name = READ_STRING();
@@ -315,8 +318,7 @@ static InterpretResult run() {
             case OP_NEGATE: {
                 Value operand = peek(0);
                 if (!IS_NUMBER(operand)) {
-                    runtimeError("Operand must be a number.");
-                    return INTERPRET_RUNTIME_ERROR;
+                    RUNTIME_ERROR("Operand must be a number.");
                 }
                 vm.stackTop[-1] = NUMBER_VAL(-AS_NUMBER(operand));
                 break;
@@ -328,25 +330,28 @@ static InterpretResult run() {
             }
             case OP_JUMP: {
                 uint16_t offset = READ_SHORT();
-                frame->ip += offset;
+                ip += offset;
                 break;
             }
             case OP_JUMP_IF_FALSE: {
                 uint16_t offset = READ_SHORT();
-                if (isFalsey(peek(0))) frame->ip += offset;
+                if (isFalsey(peek(0))) ip += offset;
                 break;
             }
             case OP_LOOP: {
                 uint16_t offset = READ_SHORT();
-                frame->ip -= offset;
+                ip -= offset;
                 break;
             }
             case OP_CALL: {
                 int argCount = READ_BYTE();
+                frame->ip = ip;
                 if (!callValue(peek(argCount), argCount)) {
                     return INTERPRET_RUNTIME_ERROR;
                 }
+
                 frame = &vm.frames[vm.frameCount - 1];
+                ip = frame->ip;
                 break;
             }
             case OP_RETURN: {
@@ -360,11 +365,13 @@ static InterpretResult run() {
                 vm.stackTop = frame->slots;
                 push(result);
                 frame = &vm.frames[vm.frameCount - 1];
+                ip = frame->ip;
                 break;
             }
         }
     }
 
+#undef RUNTIME_ERROR
 #undef READ_BYTE
 #undef READ_SHORT
 #undef READ_LONG
