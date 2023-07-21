@@ -12,10 +12,6 @@
 
 VM vm;
 
-static Value clockNative(Value* args) {
-    return NUMBER_VAL((double)clock() / CLOCKS_PER_SEC);
-}
-
 static void resetStack() {
     vm.stackTop = vm.stack;
     vm.frameCount = 0;
@@ -42,6 +38,14 @@ static void runtimeError(const char* format, ...) {
     }
 
     resetStack();
+}
+
+static bool hasError() {
+    return vm.frameCount == 0;
+}
+
+static Value clockNative(Value* args) {
+    return NUMBER_VAL((double)clock() / CLOCKS_PER_SEC);
 }
 
 static void defineNative(const char* name, NativeFn function, int arity) {
@@ -117,24 +121,28 @@ static bool call(ObjFunction* function, int argCount) {
     return true;
 }
 
+static bool callNative(ObjNative* native, int argCount) {
+    if (argCount != native->arity) {
+        runtimeError("Expected %d arguments, but got %d.",
+            native->arity, argCount);
+        return false;
+    }
+
+    Value result = native->function(vm.stackTop - argCount);
+    if (hasError()) return false;
+
+    vm.stackTop -= argCount + 1;
+    push(result);
+    return true;
+}
+
 static bool callValue(Value callee, int argCount) {
     if (IS_OBJ(callee)) {
         switch (OBJ_TYPE(callee)) {
             case OBJ_FUNCTION:
                 return call(AS_FUNCTION(callee), argCount);
-            case OBJ_NATIVE: {
-                ObjNative* native = AS_NATIVE(callee);
-                if (argCount != native->arity) {
-                    runtimeError("Expected %d arguments, but got %d.",
-                        native->arity, argCount);
-                    return false;
-                }
-
-                Value result = native->function(vm.stackTop - argCount);
-                vm.stackTop -= argCount + 1;
-                push(result);
-                return true;
-            }
+            case OBJ_NATIVE:
+                return callNative(AS_NATIVE(callee), argCount);
             default:
                 break; // Non-callable object type.
         }
