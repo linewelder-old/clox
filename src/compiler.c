@@ -194,6 +194,8 @@ static int makeConstant(Value value) {
     if (constant> CONSTANT_ID_MAX) {
         error("Too many constants in one chunk.");
     }
+
+    return constant;
 }
 
 static void emitConstant(Value value) {
@@ -418,6 +420,8 @@ static void string(bool canAssign) {
                                 parser.previous.length - 2);
     emitConstant(OBJ_VAL(str));
 }
+
+#include <stdio.h>
 
 static void namedVariable(Token name, bool canAssign) {
     uint8_t getOp, setOp;
