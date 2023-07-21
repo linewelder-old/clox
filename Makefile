@@ -1,15 +1,15 @@
-TARGET_EXEC = clox
+TARGET_EXEC := clox
 
-CC = gcc
-CFLAGS = -g
+CC := gcc
+CFLAGS := -g
 
-SRC_DIR = ./src
-SRCS = $(shell ls $(SRC_DIR)/*.c)
+SRC_DIR := ./src
+SRCS := $(shell ls $(SRC_DIR)/*.c)
 
-BUILD_DIR = ./build
+BUILD_DIR := ./build
 DEP_DIR := $(BUILD_DIR)/.deps
 DEP_FLAGS = -MT $@ -MMD -MP -MF $(DEP_DIR)/$*.Td
-OBJS = $(SRCS:$(SRC_DIR)/%.c=$(BUILD_DIR)/%.o)
+OBJS := $(SRCS:$(SRC_DIR)/%.c=$(BUILD_DIR)/%.o)
 
 $(BUILD_DIR)/$(TARGET_EXEC): $(BUILD_DIR) $(OBJS)
 	$(CC) $(CFLAGS) $(OBJS) -o $@
