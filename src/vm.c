@@ -48,6 +48,16 @@ static Value clockNative(Value* args) {
     return NUMBER_VAL((double)clock() / CLOCKS_PER_SEC);
 }
 
+static Value readNumberNative(Value* args) {
+    double result;
+    scanf("%lf", &result);
+
+    int c;
+    while ((c = getchar()) != '\n' && c != EOF);
+
+    return NUMBER_VAL(result);
+}
+
 static Value errorNative(Value* args) {
     if (!IS_STRING(args[0])) {
         runtimeError("Argument must be a string.");
@@ -73,6 +83,7 @@ void initVM() {
     initTable(&vm.strings);
 
     defineNative("clock", clockNative, 0);
+    defineNative("readNumber", readNumberNative, 0);
     defineNative("error", errorNative, 1);
 }
 
