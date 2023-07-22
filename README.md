@@ -60,3 +60,16 @@ the language.
   _Note: unlike in most other languages, this switch statement allows for any
   expressions in `case` clauses, does not allow fallthroughs and thus does not
   require `break;`s at the end of each case._
+
+- Continue statements
+
+  Skips the rest of the loop body, jumping to the condition check for the next
+  iteration.
+
+  ```javascript
+  // Prints only "4".
+  for (var i = 0; i < 10; i = i + 1) {
+      if (i != 4) continue;
+      print i;
+  }
+  ```
