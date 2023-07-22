@@ -24,8 +24,6 @@ the language.
 
   The stack grows to accomodate all the values pushed to it.
 
-  __TODO: when functions are added, add checks to prevent infinite recursion.__
-
 - Switch statements
 
   The following code:
