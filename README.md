@@ -73,3 +73,16 @@ the language.
       print i;
   }
   ```
+
+- Arity checking for native function calls
+
+  The number of arguments passed to a native function is checked.
+
+  ```javascript
+  print clock("extra argument"); // Error!
+  ```
+
+- New native functions!
+
+  - `readNumber()` - reads a double from the user and returns it;
+  - `error(message)` - throws a runtime error with the given string message;
