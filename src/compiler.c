@@ -421,8 +421,6 @@ static void string(bool canAssign) {
     emitConstant(OBJ_VAL(str));
 }
 
-#include <stdio.h>
-
 static void namedVariable(Token name, bool canAssign) {
     uint8_t getOp, setOp;
     int arg = resolveLocal(current, &name);
