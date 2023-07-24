@@ -83,6 +83,10 @@ static int disassembleInstruction_(Chunk* chunk, int offset, int line) {
             return constantLongInstruction("OP_DEF_GLOBL_LNG", chunk, offset);
         case OP_SET_GLOBL_LNG:
             return constantLongInstruction("OP_SET_GLOBL_LNG", chunk, offset);
+        case OP_GET_UPVALUE:
+            return byteInstruction("OP_GET_UPVALUE", chunk, offset);
+        case OP_SET_UPVALUE:
+            return byteInstruction("OP_SET_UPVALUE", chunk, offset);
         case OP_EQUAL:
             return simpleInstruction("OP_EQUAL", offset);
         case OP_POP:

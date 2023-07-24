@@ -24,6 +24,8 @@ typedef enum {
     OP_GET_GLOBL_LNG,
     OP_DEF_GLOBL_LNG,
     OP_SET_GLOBL_LNG,
+    OP_GET_UPVALUE,
+    OP_SET_UPVALUE,
     OP_EQUAL,
     OP_GREATER,
     OP_LESS,

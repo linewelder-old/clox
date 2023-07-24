@@ -46,6 +46,11 @@ typedef struct {
     int depth;
 } Local;
 
+typedef struct {
+    uint8_t index;
+    bool isLocal;
+} Upvalue;
+
 typedef enum {
     TYPE_FUNCTION,
     TYPE_SCRIPT,
@@ -59,6 +64,8 @@ typedef struct Compiler {
     Local* locals;
     int localCount;
     int localCapacity;
+
+    Upvalue upvalues[UINT8_COUNT];
     int scopeDepth;
 
     int loopContinueOffset; // -1 if not in a loop.
@@ -300,6 +307,38 @@ static int resolveLocal(Compiler* compiler, Token* name) {
     return -1;
 }
 
+static int addUpvalue(Compiler* compiler, uint8_t index, bool isLocal) {
+    int upvalueCount = compiler->function->upvalueCount;
+    for (int i = 0; i < upvalueCount; i++) {
+        Upvalue* upvalue = &compiler->upvalues[i];
+        if (upvalue->index == index && upvalue->isLocal == isLocal) {
+            return i;
+        }
+    }
+
+    if (upvalueCount >= UINT8_COUNT) {
+        error("Too many closure variables in function.");
+        return 0;
+    }
+
+    compiler->upvalues[upvalueCount] = (Upvalue){
+        .isLocal = isLocal,
+        .index = index
+    };
+    return compiler->function->upvalueCount++;
+}
+
+static int resolveUpvalue(Compiler* compiler, Token* name) {
+    if (compiler->enclosing == NULL) return -1;
+
+    int local = resolveLocal(compiler->enclosing, name);
+    if (local != -1) {
+        return addUpvalue(compiler, (uint8_t)local, true);
+    }
+
+    return -1;
+}
+
 static void addLocal(Token name) {
     if (current->localCount == MAX_LOCALS) {
         error("Too many local variables in function.");
@@ -423,24 +462,11 @@ static void string(bool canAssign) {
 
 static void namedVariable(Token name, bool canAssign) {
     uint8_t getOp, setOp;
-    int arg = resolveLocal(current, &name);
+    bool isLong;
+    int arg;
 
-    bool isAssignment = canAssign && match(TOKEN_EQUAL);
-    if (isAssignment) expression();
-
-    bool isGlobal = arg == -1;
-    if (isGlobal) arg = identifierConstant(&name);
-
-    bool isLong = arg >= 256;
-    if (isGlobal) {
-        if (isLong) {
-            getOp = OP_GET_GLOBL_LNG;
-            setOp = OP_SET_GLOBL_LNG;
-        } else {
-            getOp = OP_GET_GLOBAL;
-            setOp = OP_SET_GLOBAL;
-        }
-    } else {
+    if ((arg = resolveLocal(current, &name)) != -1) {
+        isLong = arg >= 256;
         if (isLong) {
             getOp = OP_GET_LOCAL_LNG;
             setOp = OP_SET_LOCAL_LNG;
@@ -448,7 +474,24 @@ static void namedVariable(Token name, bool canAssign) {
             getOp = OP_GET_LOCAL;
             setOp = OP_SET_LOCAL;
         }
+    } else if ((arg = resolveUpvalue(current, &name)) != -1) {
+        isLong = false;
+        getOp = OP_GET_UPVALUE;
+        setOp = OP_SET_UPVALUE;
+    } else {
+        arg = identifierConstant(&name);
+        isLong = arg >= 256;
+        if (isLong) {
+            getOp = OP_GET_GLOBL_LNG;
+            setOp = OP_SET_GLOBL_LNG;
+        } else {
+            getOp = OP_GET_GLOBAL;
+            setOp = OP_SET_GLOBAL;
+        }
     }
+
+    bool isAssignment = canAssign && match(TOKEN_EQUAL);
+    if (isAssignment) expression();
 
     emitByte(isAssignment ? setOp : getOp);
     if (isLong) {
