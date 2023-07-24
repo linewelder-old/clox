@@ -35,6 +35,9 @@ static void freeObject(Obj* object) {
             FREE_ARRAY(char, string->chars, string->length + 1);
             FREE(ObjString, object);
             break;
+        case OBJ_UPVALUE:
+            FREE(ObjUpvalue, object);
+            break;
         }
     }
 }
