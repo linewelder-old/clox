@@ -146,6 +146,8 @@ static int disassembleInstruction_(Chunk* chunk, int offset, int line) {
 
             return offset;
         }
+        case OP_CLOSE_UPVALUE:
+            return simpleInstruction("OP_CLOSE_UPVALUE", offset);
         case OP_RETURN:
             return simpleInstruction("OP_RETURN", offset);
         default:
