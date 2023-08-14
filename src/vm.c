@@ -70,6 +70,10 @@ static Value errorNative(Value* args) {
     return NIL_VAL;
 }
 
+static Value heapSizeNative(Value* args) {
+    return NUMBER_VAL(vm.bytesAllocated);
+}
+
 static void defineNative(const char* name, NativeFn function, int arity) {
     push(OBJ_VAL(copyString(name, (int)strlen(name))));
     push(OBJ_VAL(newNative(function, arity)));
@@ -94,6 +98,7 @@ void initVM() {
     defineNative("clock", clockNative, 0);
     defineNative("readNumber", readNumberNative, 0);
     defineNative("error", errorNative, 1);
+    defineNative("heapSize", heapSizeNative, 0);
 }
 
 void freeVM() {

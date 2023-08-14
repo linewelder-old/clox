@@ -86,3 +86,4 @@ the language.
 
   - `readNumber()` - reads a double from the user and returns it;
   - `error(message)` - throws a runtime error with the given string message;
+  - `heapSize()` - returns the total size of managed objects in bytes;

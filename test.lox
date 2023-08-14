@@ -1,0 +1,8 @@
+var hi = "hello";
+
+var a = "";
+for (var i = 0; i < 100; i = i + 1) {
+    a = a + hi;
+    print a;
+    print heapSize();
+}
