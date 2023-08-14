@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <stdlib.h>
 
 #include "compiler.h"
@@ -5,7 +6,6 @@
 #include "vm.h"
 
 #ifdef DEBUG_LOG_GC
-#include <stdio.h>
 #include "debug.h"
 #endif
 
@@ -29,7 +29,10 @@ void* reallocate(void* pointer, size_t oldSize, size_t newSize) {
     }
 
     void* result = realloc(pointer, newSize);
-    if (result == NULL) exit(1);
+    if (result == NULL) {
+        fprintf(stderr, "Out of memory.");
+        exit(1);
+    }
     return result;
 }
 
@@ -49,7 +52,10 @@ void markObject(Obj* object) {
         vm.grayStack = (Obj**)realloc(vm.grayStack,
                                       sizeof(Obj*) * vm.grayCapacity);
 
-        if (vm.grayStack == NULL) exit(1);
+        if (vm.grayStack == NULL) {
+            fprintf(stderr, "Out of memory.");
+            exit(1);
+        }
     }
 
     vm.grayStack[vm.grayCount++] = object;

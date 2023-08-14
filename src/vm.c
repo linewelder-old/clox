@@ -112,7 +112,10 @@ void push(Value value) {
 
         int newCapacity = GROW_CAPACITY(oldCapacity);
         vm.stack = (Value*)realloc(vm.stack, sizeof(Value) * newCapacity);
-        if (vm.stack == NULL) exit(1);
+        if (vm.stack == NULL) {
+            fprintf(stderr, "Out of memory.");
+            exit(1);
+        }
 
         vm.stackTop = vm.stack + stackSize;
         vm.stackEnd = vm.stack + newCapacity;
