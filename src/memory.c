@@ -90,7 +90,9 @@ static void blackenObject(Obj* object) {
 
 static void freeObject(Obj* object) {
 #ifdef DEBUG_LOG_GC
-    printf("%p free type %d\n", (void*)object, object->type);
+    printf("%p free type %d ", (void*)object, object->type);
+    printObject(OBJ_VAL(object));
+    printf("\n");
 #endif
 
     switch (object->type) {
