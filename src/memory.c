@@ -12,6 +12,10 @@
 #define GC_HEAP_GROW_FACTOR 2
 
 void* reallocate(void* pointer, size_t oldSize, size_t newSize) {
+#ifdef DEBUG_LOG_GC
+    printf("reallocate %zu -> %zu\n", oldSize, newSize);
+#endif
+
     vm.bytesAllocated += newSize - oldSize;
     if (newSize > oldSize) {
 #ifdef DEBUG_STRESS_GC
