@@ -1,5 +1,6 @@
 #include <stdarg.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <time.h>
 
@@ -110,7 +111,9 @@ void push(Value value) {
         int oldCapacity = vm.stackEnd - vm.stack;
 
         int newCapacity = GROW_CAPACITY(oldCapacity);
-        vm.stack = GROW_ARRAY(Value, vm.stack, oldCapacity, newCapacity);
+        vm.stack = (Value*)realloc(vm.stack, sizeof(Value) * newCapacity);
+        if (vm.stack == NULL) exit(1);
+
         vm.stackTop = vm.stack + stackSize;
         vm.stackEnd = vm.stack + newCapacity;
 
