@@ -84,7 +84,8 @@ the language.
 
 - New native functions!
 
-  - `readNumber()` - reads a double from the user and returns it;
+  - `readNumber()` - reads a line from stdin, returns the first number it can
+    read from it or nil if fails;
   - `error(message)` - throws a runtime error with the given string message;
   - `heapSize()` - returns the total size of managed objects in bytes;
   - `setProperty(instance, name, value)` - assignes the value to the field with

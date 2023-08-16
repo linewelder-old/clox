@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 #include <time.h>
 
 #include "common.h"
@@ -51,12 +52,13 @@ static Value clockNative(Value* args) {
 }
 
 static Value readNumberNative(Value* args) {
-    double result;
+    double result = NAN;
     scanf("%lf", &result);
 
     int c;
     while ((c = getchar()) != '\n' && c != EOF);
 
+    if (isnan(result)) return NIL_VAL;
     return NUMBER_VAL(result);
 }
 
