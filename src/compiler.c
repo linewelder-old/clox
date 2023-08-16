@@ -370,6 +370,9 @@ static void addLocal(Token name) {
     local->isCaptured = false;
 }
 
+/**
+ * Create a new local variable using the previous token as the name.
+ */
 static void declareVariable() {
     if (current->scopeDepth == 0) return;
 
@@ -590,6 +593,10 @@ static void markInitialized() {
     current->locals[current->localCount - 1].depth = current->scopeDepth;
 }
 
+/**
+ * Emit a global variable assignment if in the global scope.
+ * Mark the last local variable as initialized otherwise.
+ */
 static void defineVariable(int global) {
     if (current->scopeDepth > 0) {
         markInitialized();
