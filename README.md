@@ -87,5 +87,14 @@ the language.
   - `readNumber()` - reads a double from the user and returns it;
   - `error(message)` - throws a runtime error with the given string message;
   - `heapSize()` - returns the total size of managed objects in bytes;
+  - `setProperty(instance, name, value)` - assignes the value to the field with
+    the given name (not neccessarily existing one) on the instance, returns the
+    value. For example `setProperty(foo, "bar", true)` is equivalent to
+    `foo.bar = true`.
+  - `getProperty(instance, name)` - returns the value of the field with the
+    given name on the instance, errors if the instance does not have it. For
+    example `getProperty(foo, "bar")` is equivalent to `foo.bar`.
+  - `deleteProperty(instance, name)` - deletes the field with the given name
+    from the instance;
   - `hasProperty(instance, name)` - returns true if the instance has a
     field/method with the given name, false otherwise;
