@@ -74,6 +74,22 @@ static Value heapSizeNative(Value* args) {
     return NUMBER_VAL(vm.bytesAllocated);
 }
 
+static Value hasPropertyNative(Value* args) {
+    if (!IS_INSTANCE(args[0])) {
+        runtimeError("First argument must be a class instance.");
+        return NIL_VAL;
+    }
+
+    if (!IS_STRING(args[1])) {
+        runtimeError("Second argument must be a string.");
+        return NIL_VAL;
+    }
+
+    return BOOL_VAL(tableContains(
+                        &AS_INSTANCE(args[0])->fields,
+                        AS_STRING(args[1])));
+}
+
 static void defineNative(const char* name, NativeFn function, int arity) {
     push(OBJ_VAL(copyString(name, (int)strlen(name))));
     push(OBJ_VAL(newNative(function, arity)));
@@ -99,6 +115,7 @@ void initVM() {
     defineNative("readNumber", readNumberNative, 0);
     defineNative("error", errorNative, 1);
     defineNative("heapSize", heapSizeNative, 0);
+    defineNative("hasProperty", hasPropertyNative, 2);
 }
 
 void freeVM() {

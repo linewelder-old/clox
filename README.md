@@ -87,3 +87,5 @@ the language.
   - `readNumber()` - reads a double from the user and returns it;
   - `error(message)` - throws a runtime error with the given string message;
   - `heapSize()` - returns the total size of managed objects in bytes;
+  - `hasProperty(instance, name)` - returns true if the instance has a
+    field/method with the given name, false otherwise;
