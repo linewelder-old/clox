@@ -554,6 +554,11 @@ static void variable(bool canAssign) {
 }
 
 static void this_(bool canAssign) {
+    if (currentClass == NULL) {
+        error("Can't use 'this' outside of a class.");
+        return;
+    }
+
     variable(false);
 }
 
