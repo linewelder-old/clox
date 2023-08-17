@@ -488,6 +488,15 @@ static void string(bool canAssign) {
     emitConstant(OBJ_VAL(str));
 }
 
+/**
+ * Emit bytecode to fetch/set the value of a variable.
+ *
+ * If the current token is TOKEN_EQUAL, and canAssign is true, read the equals
+ * sign and the right-hand side of the assignment and emit bytecode for the
+ * assignment.
+ *
+ * Otherwise, emit bytecode to put the variable's value onto the stack.
+ */
 static void namedVariable(Token name, bool canAssign) {
     uint8_t getOp, setOp;
     bool isLong;
