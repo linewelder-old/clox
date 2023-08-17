@@ -258,6 +258,13 @@ static bool callNative(ObjNative* native, int argCount) {
     return true;
 }
 
+/**
+ * Call a value making the top argCount + 1 slots on the stack the bottom of
+ * the callee's stack, then remove all that from the caller's stack and push the
+ * return value.
+ *
+ * Return true on success, false on error.
+ */
 static bool callValue(Value callee, int argCount) {
     if (IS_OBJ(callee)) {
         switch (OBJ_TYPE(callee)) {
