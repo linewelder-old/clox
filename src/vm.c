@@ -220,6 +220,10 @@ static Value peek(int distance) {
     return vm.stackTop[-1 - distance];
 }
 
+static void replace(int distance, Value value) {
+    vm.stackTop[-1 - distance] = value;
+}
+
 static bool call(ObjClosure* closure, int argCount) {
     if (argCount != closure->function->arity) {
         runtimeError("Expected %d arguments, but got %d.",
@@ -259,7 +263,7 @@ static bool callValue(Value callee, int argCount) {
         switch (OBJ_TYPE(callee)) {
             case OBJ_CLASS: {
                 ObjClass* klass = AS_CLASS(callee);
-                vm.stackTop[-argCount - 1] = OBJ_VAL(newInstance(klass));
+                replace(argCount, OBJ_VAL(newInstance(klass)));
                 vm.stackTop -= argCount;
                 return true;
             }
@@ -332,7 +336,7 @@ static void concatenate() {
 
     ObjString* result = takeString(chars, length);
     vm.stackTop--;
-    vm.stackTop[-1] = OBJ_VAL(result);
+    replace(0, OBJ_VAL(result));
 }
 
 static InterpretResult run() {
@@ -369,7 +373,7 @@ static InterpretResult run() {
         double b = AS_NUMBER(valB); \
         double a = AS_NUMBER(valA); \
         vm.stackTop--; \
-        vm.stackTop[-1] = valueType(a op b); \
+        replace(0, valueType(a op b)); \
     } while (false)
 
     for (;;) {
@@ -488,7 +492,7 @@ static InterpretResult run() {
 
                 Value value;
                 if (tableGet(&instance->fields, name, &value)) {
-                    vm.stackTop[-1] = value;
+                    replace(0, value);
                     break;
                 }
 
@@ -504,14 +508,14 @@ static InterpretResult run() {
                 ObjInstance* instance = AS_INSTANCE(peek(1));
                 tableSet(&instance->fields, READ_STRING(), peek(0));
                 Value value = pop();
-                vm.stackTop[-1] = value;
+                replace(0, value);
                 break;
             }
             case OP_EQUAL: {
                 Value b = peek(0);
                 Value a = peek(1);
                 vm.stackTop--;
-                vm.stackTop[-1] = BOOL_VAL(valuesEqual(a, b));
+                replace(0, BOOL_VAL(valuesEqual(a, b)));
                 break;
             }
             case OP_GREATER:  BINARY_OP(BOOL_VAL, >); break;
@@ -525,7 +529,7 @@ static InterpretResult run() {
                     double aNumber = AS_NUMBER(a);
                     double bNumber = AS_NUMBER(b);
                     vm.stackTop--;
-                    vm.stackTop[-1] = NUMBER_VAL(aNumber + bNumber);
+                    replace(0, NUMBER_VAL(aNumber + bNumber));
                 }
                 break;
             }
@@ -533,14 +537,14 @@ static InterpretResult run() {
             case OP_MULTIPLY: BINARY_OP(NUMBER_VAL, *); break;
             case OP_DIVIDE:   BINARY_OP(NUMBER_VAL, /); break;
             case OP_NOT:
-                vm.stackTop[-1] = BOOL_VAL(isFalsey(peek(0)));
+                replace(0, BOOL_VAL(isFalsey(peek(0))));
                 break;
             case OP_NEGATE: {
                 Value operand = peek(0);
                 if (!IS_NUMBER(operand)) {
                     RUNTIME_ERROR("Operand must be a number.");
                 }
-                vm.stackTop[-1] = NUMBER_VAL(-AS_NUMBER(operand));
+                replace(0, NUMBER_VAL(-AS_NUMBER(operand)));
                 break;
             }
             case OP_PRINT: {
