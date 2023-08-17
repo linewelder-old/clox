@@ -17,7 +17,7 @@ Throws a runtime error with the given message. The message must be a string.
 
 ## `heapSize()`
 
-Returns the total size in bytes of objects managed by the GC.
+Returns the amount of bytes allocated for the VM's heap.
 
 ## `setProperty(instance, name, value)`
 
