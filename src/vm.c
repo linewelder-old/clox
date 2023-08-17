@@ -168,6 +168,9 @@ void initVM() {
     initTable(&vm.globals);
     initTable(&vm.strings);
 
+    vm.initString = NULL; // copyString can cause garbage collection.
+    vm.initString = copyString("init", 4);
+
     defineNative("clock", clockNative, 0);
     defineNative("readNumber", readNumberNative, 0);
     defineNative("error", errorNative, 1);
@@ -276,7 +279,18 @@ static bool callValue(Value callee, int argCount) {
             case OBJ_CLASS: {
                 ObjClass* klass = AS_CLASS(callee);
                 replace(argCount, OBJ_VAL(newInstance(klass)));
-                vm.stackTop -= argCount;
+                Value initializer;
+                if (tableGet(&klass->methods, vm.initString,
+                             &initializer)) {
+                    return call(AS_CLOSURE(initializer), argCount);
+                }
+
+                if (argCount != 0) {
+                    runtimeError("Expected 0 arguments, but got %d.",
+                                 argCount);
+                    return false;
+                }
+
                 return true;
             }
             case OBJ_CLOSURE:
