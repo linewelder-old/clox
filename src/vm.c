@@ -306,6 +306,36 @@ static bool callValue(Value callee, int argCount) {
 }
 
 /**
+ * Call the method with the given name from the given class on peek(argCount)
+ * with argCount arguments.
+ */
+static bool invokeFromClass(ObjClass* klass, ObjString* name,
+                            int argCount) {
+    Value method;
+    if (!tableGet(&klass->methods, name, &method)) {
+        runtimeError("Undefined property '%s'.", name->chars);
+        return false;
+    }
+    return call(AS_CLOSURE(method), argCount);
+}
+
+/**
+ * Call the method with the given name on peek(argCount) with argCount
+ * arguments.
+ */
+static bool invoke(ObjString* name, int argCount) {
+    Value receiver = peek(argCount);
+
+    if (!IS_INSTANCE(receiver)) {
+        runtimeError("Only instances have methods.");
+        return false;
+    }
+
+    ObjInstance* instance = AS_INSTANCE(receiver);
+    return invokeFromClass(instance->klass, name, argCount);
+}
+
+/**
  * Bind the method with the given name of the given class to the value on the
  * top of the stack and replace the value with it.
  *
@@ -618,6 +648,18 @@ static InterpretResult run() {
                 int argCount = READ_BYTE();
                 frame->ip = ip;
                 if (!callValue(peek(argCount), argCount)) {
+                    return INTERPRET_RUNTIME_ERROR;
+                }
+
+                frame = &vm.frames[vm.frameCount - 1];
+                ip = frame->ip;
+                break;
+            }
+            case OP_INVOKE: {
+                ObjString* method = READ_STRING();
+                int argCount = READ_BYTE();
+                frame->ip = ip;
+                if (!invoke(method, argCount)) {
                     return INTERPRET_RUNTIME_ERROR;
                 }
 
