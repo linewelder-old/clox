@@ -320,8 +320,11 @@ static bool invokeFromClass(ObjClass* klass, ObjString* name,
 }
 
 /**
- * Call the method with the given name on peek(argCount) with argCount
- * arguments.
+ * Call the property with the given name of peek(argCount) with argCount
+ * arguments. Error if peek(argCount) is not a class instance or the
+ * property was not found. For methods bind them to peek(argCount) first.
+ *
+ * Return true on success, false on error.
  */
 static bool invoke(ObjString* name, int argCount) {
     Value receiver = peek(argCount);
@@ -332,6 +335,13 @@ static bool invoke(ObjString* name, int argCount) {
     }
 
     ObjInstance* instance = AS_INSTANCE(receiver);
+
+    Value value;
+    if (tableGet(&instance->fields, name, &value)) {
+        replace(argCount, value);
+        return callValue(value, argCount);
+    }
+
     return invokeFromClass(instance->klass, name, argCount);
 }
 
