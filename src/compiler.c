@@ -621,8 +621,9 @@ static void markInitialized() {
 }
 
 /**
- * Emit a global variable assignment if in the global scope.
- * Mark the last local variable as initialized otherwise.
+ * Emit a global variable assignment using the constant with id `global` as the
+ * name if in the global scope. Mark the last local variable as initialized and
+ * ignore the global parameter otherwise.
  */
 static void defineVariable(uint8_t global) {
     if (current->scopeDepth > 0) {
