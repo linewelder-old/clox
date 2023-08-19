@@ -21,7 +21,7 @@ Returns the amount of bytes allocated for the VM's heap.
 
 ## `setProperty(instance, name, value)`
 
-Assignes the value to the field with the given name (not neccessarily existing
+Assigns the value to the field with the given name (not neccessarily existing
 one) on the class instance, returns the value. The name must be a string.
 
 For example `setProperty(foo, "bar", true)` is equivalent to `foo.bar = true`.
