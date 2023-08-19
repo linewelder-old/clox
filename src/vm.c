@@ -435,6 +435,25 @@ static InterpretResult run() {
         return INTERPRET_RUNTIME_ERROR; \
     } while (true);
 
+/**
+ * Do `call` assuming that it can fail.
+ */
+#define TRY(call) \
+    do { \
+        frame->ip = ip; \
+        if (!(call)) return INTERPRET_RUNTIME_ERROR; \
+    } while (false)
+
+/**
+ * Do `call` assuming that it can fail and affects the call stack.
+ */
+#define LOX_CALL(call) \
+    do { \
+        TRY(call); \
+        frame = &vm.frames[vm.frameCount - 1]; \
+        ip = frame->ip; \
+    } while (false)
+
 #define READ_BYTE() (*ip++)
 #define READ_SHORT() \
     (ip += 2, (uint16_t)((ip[-1] << 8) | ip[-2]))
@@ -538,9 +557,7 @@ static InterpretResult run() {
                     break;
                 }
 
-                if (!bindMethod(instance->klass, name)) {
-                    return INTERPRET_RUNTIME_ERROR;
-                }
+                TRY(bindMethod(instance->klass, name));
                 break;
             }
             case OP_SET_PROPERTY: {
@@ -558,9 +575,7 @@ static InterpretResult run() {
                 ObjString* name = READ_STRING();
                 ObjClass* superclass = AS_CLASS(pop());
 
-                if (!bindMethod(superclass, name)) {
-                    return INTERPRET_RUNTIME_ERROR;
-                }
+                TRY(bindMethod(superclass, name));
                 break;
             }
             case OP_EQUAL: {
@@ -621,38 +636,20 @@ static InterpretResult run() {
             }
             case OP_CALL: {
                 int argCount = READ_BYTE();
-                frame->ip = ip;
-                if (!callValue(peek(argCount), argCount)) {
-                    return INTERPRET_RUNTIME_ERROR;
-                }
-
-                frame = &vm.frames[vm.frameCount - 1];
-                ip = frame->ip;
+                LOX_CALL(callValue(peek(argCount), argCount));
                 break;
             }
             case OP_INVOKE: {
                 ObjString* method = READ_STRING();
                 int argCount = READ_BYTE();
-                frame->ip = ip;
-                if (!invoke(method, argCount)) {
-                    return INTERPRET_RUNTIME_ERROR;
-                }
-
-                frame = &vm.frames[vm.frameCount - 1];
-                ip = frame->ip;
+                LOX_CALL(invoke(method, argCount));
                 break;
             }
             case OP_SUPER_INVOKE: {
                 ObjString* method = READ_STRING();
                 int argCount = READ_BYTE();
                 ObjClass* superclass = AS_CLASS(pop());
-                frame->ip = ip;
-                if (!invokeFromClass(superclass, method, argCount)) {
-                    return INTERPRET_RUNTIME_ERROR;
-                }
-
-                frame = &vm.frames[vm.frameCount - 1];
-                ip = frame->ip;
+                LOX_CALL(invokeFromClass(superclass, method, argCount));
                 break;
             }
             case OP_CLOSURE: {
@@ -712,6 +709,8 @@ static InterpretResult run() {
     }
 
 #undef RUNTIME_ERROR
+#undef TRY
+#undef LOX_CALL
 #undef READ_BYTE
 #undef READ_SHORT
 #undef READ_LONG
