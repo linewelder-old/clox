@@ -568,8 +568,7 @@ static InterpretResult run() {
             }
             case OP_GET_PROPERTY: {
                 if (!IS_INSTANCE(peek(0))) {
-                    runtimeError("Only instances have properties.");
-                    return INTERPRET_RUNTIME_ERROR;
+                    RUNTIME_ERROR("Only instances have properties.");
                 }
 
                 ObjInstance* instance = AS_INSTANCE(peek(0));
@@ -588,8 +587,7 @@ static InterpretResult run() {
             }
             case OP_SET_PROPERTY: {
                 if (!IS_INSTANCE(peek(1))) {
-                    runtimeError("Only instances have fields.");
-                    return INTERPRET_RUNTIME_ERROR;
+                    RUNTIME_ERROR("Only instances have fields.");
                 }
 
                 ObjInstance* instance = AS_INSTANCE(peek(1));
