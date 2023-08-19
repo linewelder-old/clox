@@ -711,6 +711,7 @@ static InterpretResult run() {
                 frame = &vm.frames[vm.frameCount - 1];
                 ip = frame->ip;
                 break;
+            }
             case OP_CLASS:
                 push(OBJ_VAL(newClass(READ_STRING())));
                 break;
