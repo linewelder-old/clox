@@ -23,32 +23,12 @@ static int jumpInstruction(const char* name, int sign,
     return offset + 3;
 }
 
-static int readLongParameter(Chunk* chunk, int offset) {
-    return chunk->code[offset + 1] |
-           chunk->code[offset + 2] << 8 |
-           chunk->code[offset + 3] << 16;
-}
-
-static int longInstruction(const char* name, Chunk* chunk, int offset) {
-    int slot = readLongParameter(chunk, offset);
-    printf("%-16s %d\n", name, slot);
-    return offset + 4;
-}
-
 static int constantInstruction(const char* name, Chunk* chunk, int offset) {
     uint8_t constant = chunk->code[offset + 1];
     printf("%-16s %4d '", name, constant);
     printValue(chunk->constants.values[constant]);
     printf("'\n");
     return offset + 2;
-}
-
-static int constantLongInstruction(const char* name, Chunk* chunk, int offset) {
-    int constant = readLongParameter(chunk, offset);
-    printf("%-16s %d '", name, constant);
-    printValue(chunk->constants.values[constant]);
-    printf("'\n");
-    return offset + 4;
 }
 
 static int invokeInstruction(const char* name, Chunk* chunk, int offset) {
@@ -73,8 +53,6 @@ static int disassembleInstruction_(Chunk* chunk, int offset, int line) {
     switch (instruction) {
         case OP_CONSTANT:
             return constantInstruction("OP_CONSTANT", chunk, offset);
-        case OP_CONSTANT_LONG:
-            return constantLongInstruction("OP_CONSTANT_LONG", chunk, offset);
         case OP_NIL:
             return simpleInstruction("OP_NIL", offset);
         case OP_TRUE:
@@ -87,12 +65,6 @@ static int disassembleInstruction_(Chunk* chunk, int offset, int line) {
             return constantInstruction("OP_DEFINE_GLOBAL", chunk, offset);
         case OP_SET_GLOBAL:
             return constantInstruction("OP_SET_GLOBAL", chunk, offset);
-        case OP_GET_GLOBL_LNG:
-            return constantLongInstruction("OP_GET_GLOBL_LNG", chunk, offset);
-        case OP_DEF_GLOBL_LNG:
-            return constantLongInstruction("OP_DEF_GLOBL_LNG", chunk, offset);
-        case OP_SET_GLOBL_LNG:
-            return constantLongInstruction("OP_SET_GLOBL_LNG", chunk, offset);
         case OP_GET_UPVALUE:
             return byteInstruction("OP_GET_UPVALUE", chunk, offset);
         case OP_SET_UPVALUE:
@@ -111,10 +83,6 @@ static int disassembleInstruction_(Chunk* chunk, int offset, int line) {
             return byteInstruction("OP_GET_LOCAL", chunk, offset);
         case OP_SET_LOCAL:
             return byteInstruction("OP_SET_LOCAL", chunk, offset);
-        case OP_GET_LOCAL_LNG:
-            return longInstruction("OP_GET_LOCAL_LNG", chunk, offset);
-        case OP_SET_LOCAL_LNG:
-            return longInstruction("OP_SET_LOCAL_LNG", chunk, offset);
         case OP_GREATER:
             return simpleInstruction("OP_GREATER", offset);
         case OP_LESS:

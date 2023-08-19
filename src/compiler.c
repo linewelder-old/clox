@@ -172,10 +172,6 @@ static void emitByte(uint8_t byte) {
     writeChunk(currentChunk(), byte, parser.previous.line);
 }
 
-static void emitLong(int value) {
-    writeLong(currentChunk(), value, parser.previous.line);
-}
-
 static void emitBytes(uint8_t byte1, uint8_t byte2) {
     emitByte(byte1);
     emitByte(byte2);
@@ -209,9 +205,9 @@ static void emitReturn() {
     emitByte(OP_RETURN);
 }
 
-static int makeConstant(Value value) {
+static uint8_t makeConstant(Value value) {
     int constant = addConstant(currentChunk(), value);
-    if (constant> CONSTANT_ID_MAX) {
+    if (constant > UINT8_MAX) {
         error("Too many constants in one chunk.");
     }
 
@@ -219,10 +215,7 @@ static int makeConstant(Value value) {
 }
 
 static void emitConstant(Value value) {
-    int constant = writeConstant(currentChunk(), value, parser.previous.line);
-    if (constant > CONSTANT_ID_MAX) {
-        error("Too many constants in one chunk.");
-    }
+    emitBytes(OP_CONSTANT, makeConstant(value));
 }
 
 static void patchJump(int offset) {
@@ -307,7 +300,7 @@ static void declaration();
 static ParseRule* getRule(TokenType type);
 static void parsePrecedence(Precedence precedence);
 
-static int identifierConstant(Token* name) {
+static uint8_t identifierConstant(Token* name) {
     return makeConstant(OBJ_VAL(copyString(name->start, name->length)));
 }
 
@@ -369,7 +362,7 @@ static int resolveUpvalue(Compiler* compiler, Token* name) {
 }
 
 static void addLocal(Token name) {
-    if (current->localCount == MAX_LOCALS) {
+    if (current->localCount == UINT8_COUNT) {
         error("Too many local variables in function.");
         return;
     }
@@ -520,43 +513,24 @@ static void string(bool canAssign) {
  */
 static void namedVariable(Token name, bool canAssign) {
     uint8_t getOp, setOp;
-    bool isLong;
     int arg;
 
     if ((arg = resolveLocal(current, &name)) != -1) {
-        isLong = arg >= 256;
-        if (isLong) {
-            getOp = OP_GET_LOCAL_LNG;
-            setOp = OP_SET_LOCAL_LNG;
-        } else {
-            getOp = OP_GET_LOCAL;
-            setOp = OP_SET_LOCAL;
-        }
+        getOp = OP_GET_LOCAL;
+        setOp = OP_SET_LOCAL;
     } else if ((arg = resolveUpvalue(current, &name)) != -1) {
-        isLong = false;
         getOp = OP_GET_UPVALUE;
         setOp = OP_SET_UPVALUE;
     } else {
         arg = identifierConstant(&name);
-        isLong = arg >= 256;
-        if (isLong) {
-            getOp = OP_GET_GLOBL_LNG;
-            setOp = OP_SET_GLOBL_LNG;
-        } else {
-            getOp = OP_GET_GLOBAL;
-            setOp = OP_SET_GLOBAL;
-        }
+        getOp = OP_GET_GLOBAL;
+        setOp = OP_SET_GLOBAL;
     }
 
     bool isAssignment = canAssign && match(TOKEN_EQUAL);
     if (isAssignment) expression();
 
-    emitByte(isAssignment ? setOp : getOp);
-    if (isLong) {
-        emitLong(arg);
-    } else {
-        emitByte((uint8_t)arg);
-    }
+    emitBytes(isAssignment ? setOp : getOp, (uint8_t)arg);
 }
 
 static void variable(bool canAssign) {
@@ -632,7 +606,7 @@ static void parsePrecedence(Precedence precedence) {
     }
 }
 
-static int parseVariable(const char* errorMessage) {
+static uint8_t parseVariable(const char* errorMessage) {
     consume(TOKEN_IDENTIFIER, errorMessage);
 
     declareVariable();
@@ -650,18 +624,13 @@ static void markInitialized() {
  * Emit a global variable assignment if in the global scope.
  * Mark the last local variable as initialized otherwise.
  */
-static void defineVariable(int global) {
+static void defineVariable(uint8_t global) {
     if (current->scopeDepth > 0) {
         markInitialized();
         return;
     }
 
-    if (global < 256) {
-        emitBytes(OP_DEFINE_GLOBAL, (uint8_t)global);
-    } else {
-        emitByte(OP_DEF_GLOBL_LNG);
-        emitLong(global);
-    }
+    emitBytes(OP_DEFINE_GLOBAL, global);
 }
 
 static ParseRule* getRule(TokenType type) {
@@ -711,7 +680,7 @@ static void function(FunctionType type) {
 
 static void method() {
     consume(TOKEN_IDENTIFIER, "Expect method name.");
-    int constant = identifierConstant(&parser.previous);
+    uint8_t constant = identifierConstant(&parser.previous);
 
     FunctionType type = TYPE_METHOD;
     if (parser.previous.length == 4 &&
@@ -725,7 +694,7 @@ static void method() {
 static void classDeclaration() {
     consume(TOKEN_IDENTIFIER, "Expect class name.");
     Token className = parser.previous;
-    int nameConstant = identifierConstant(&parser.previous);
+    uint8_t nameConstant = identifierConstant(&parser.previous);
     declareVariable();
 
     emitBytes(OP_CLASS, nameConstant);

@@ -4,11 +4,8 @@
 #include "common.h"
 #include "value.h"
 
-#define CONSTANT_ID_MAX 0xFFFFFF
-
 typedef enum {
     OP_CONSTANT,
-    OP_CONSTANT_LONG,
     OP_NIL,
     OP_TRUE,
     OP_FALSE,
@@ -16,14 +13,9 @@ typedef enum {
     OP_DUPLICATE,
     OP_GET_LOCAL,
     OP_SET_LOCAL,
-    OP_GET_LOCAL_LNG,
-    OP_SET_LOCAL_LNG,
     OP_GET_GLOBAL,
     OP_DEFINE_GLOBAL,
     OP_SET_GLOBAL,
-    OP_GET_GLOBL_LNG,
-    OP_DEF_GLOBL_LNG,
-    OP_SET_GLOBL_LNG,
     OP_GET_UPVALUE,
     OP_SET_UPVALUE,
     OP_GET_PROPERTY,
@@ -70,11 +62,9 @@ typedef struct {
 void initChunk(Chunk* chunk);
 void freeChunk(Chunk* chunk);
 void writeChunk(Chunk* chunk, uint8_t byte, int line);
-void writeLong(Chunk* chunk, int value, int line);
 
 int getLine(Chunk* chunk, int offset);
 
 int addConstant(Chunk* chunk, Value value);
-int writeConstant(Chunk* chunk, Value value, int line);
 
 #endif

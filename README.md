@@ -9,17 +9,6 @@ The interpreter supports features that were suggested to be added in the
 Challenges sections. This section only documents the differences that affect
 the language.
 
-- Up to 2^24 constants in a code chunk
-
-  Every literal or global variable reference produces a constant at compile
-  time. The original clox from the book only supports up to 256 constants per
-  chunk, a chunk being for example a function. This implentation on the other
-  hand supports up to 2^24 of them.
-
-- Up to 2^24 local variables in scope at the same time
-
-  The original implementation only allows for up to 256.
-
 - Infinite stack capacity
 
   The stack grows to accomodate all the values pushed to it.

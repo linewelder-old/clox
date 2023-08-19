@@ -438,16 +438,11 @@ static InterpretResult run() {
 #define READ_BYTE() (*ip++)
 #define READ_SHORT() \
     (ip += 2, (uint16_t)((ip[-1] << 8) | ip[-2]))
-#define READ_LONG() \
-    (ip += 3, (int)((ip[-1] << 16) | (ip[-2] << 8) | ip[-3]))
 
 #define READ_CONSTANT() \
     (frame->closure->function->chunk.constants.values[READ_BYTE()])
-#define READ_CONSTANT_LONG() \
-    (frame->closure->function->chunk.constants.values[READ_LONG()])
 
 #define READ_STRING() AS_STRING(READ_CONSTANT())
-#define READ_STRING_LONG() AS_STRING(READ_CONSTANT_LONG())
 #define BINARY_OP(valueType, op) \
     do { \
         Value valB = peek(0); \
@@ -481,11 +476,6 @@ static InterpretResult run() {
                 push(constant);
                 break;
             }
-            case OP_CONSTANT_LONG: {
-                Value constant = READ_CONSTANT_LONG();
-                push(constant);
-                break;
-            }
             case OP_NIL:   push(NIL_VAL); break;
             case OP_TRUE:  push(BOOL_VAL(true)); break;
             case OP_FALSE: push(BOOL_VAL(false)); break;
@@ -498,16 +488,6 @@ static InterpretResult run() {
             }
             case OP_SET_LOCAL: {
                 uint8_t slot = READ_BYTE();
-                frame->slots[slot] = peek(0);
-                break;
-            }
-            case OP_GET_LOCAL_LNG: {
-                int slot = READ_LONG();
-                push(frame->slots[slot]);
-                break;
-            }
-            case OP_SET_LOCAL_LNG: {
-                int slot = READ_LONG();
                 frame->slots[slot] = peek(0);
                 break;
             }
@@ -535,22 +515,6 @@ static InterpretResult run() {
             }
             case OP_SET_GLOBAL: {
                 ObjString* name = READ_STRING();
-                SET_GLOBAL(name);
-                break;
-            }
-            case OP_GET_GLOBL_LNG: {
-                ObjString* name = READ_STRING_LONG();
-                GET_GLOBAL(name);
-                break;
-            }
-            case OP_DEF_GLOBL_LNG: {
-                ObjString* name = READ_STRING_LONG();
-                tableSet(&vm.globals, name, peek(0));
-                pop();
-                break;
-            }
-            case OP_SET_GLOBL_LNG: {
-                ObjString* name = READ_STRING_LONG();
                 SET_GLOBAL(name);
                 break;
             }
