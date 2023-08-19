@@ -491,20 +491,13 @@ static InterpretResult run() {
                 frame->slots[slot] = peek(0);
                 break;
             }
-#define GET_GLOBAL(name) \
-    Value value; \
-    if (!tableGet(&vm.globals, name, &value)) { \
-        RUNTIME_ERROR("Undefined variable '%s'.", name->chars); \
-    } \
-    push(value);
-#define SET_GLOBAL(name) \
-    if (tableSet(&vm.globals, name, peek(0))) { \
-        tableDelete(&vm.globals, name); \
-        RUNTIME_ERROR("Undefined variable '%s'.", name->chars); \
-    }
             case OP_GET_GLOBAL: {
                 ObjString* name = READ_STRING();
-                GET_GLOBAL(name);
+                Value value;
+                if (!tableGet(&vm.globals, name, &value)) {
+                    RUNTIME_ERROR("Undefined variable '%s'.", name->chars);
+                }
+                push(value);
                 break;
             }
             case OP_DEFINE_GLOBAL: {
@@ -515,11 +508,12 @@ static InterpretResult run() {
             }
             case OP_SET_GLOBAL: {
                 ObjString* name = READ_STRING();
-                SET_GLOBAL(name);
+                if (tableSet(&vm.globals, name, peek(0))) {
+                    tableDelete(&vm.globals, name);
+                    RUNTIME_ERROR("Undefined variable '%s'.", name->chars);
+                }
                 break;
             }
-#undef GET_GLOBAL
-#undef SET_GLOBAL
             case OP_GET_UPVALUE: {
                 uint8_t slot = READ_BYTE();
                 push(*frame->closure->upvalues[slot]->location);
