@@ -43,6 +43,9 @@ typedef enum {
 
 extern VM vm;
 
+void runtimeError(const char* format, ...);
+void defineNative(const char* name, NativeFn function, int arity);
+
 void initVM();
 void freeVM();
 InterpretResult interpret(const char* source);
