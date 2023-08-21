@@ -1,0 +1,4 @@
+// [line 3] Error at 'class': Expect expression.
+switch (nil) {
+    case nil: class Foo {}
+}

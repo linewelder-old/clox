@@ -1,0 +1,4 @@
+switch (nil) {
+    default:
+    default: // Error at 'default': Multiple default cases.
+}

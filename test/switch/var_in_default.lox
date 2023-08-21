@@ -1,0 +1,5 @@
+// [line 4] Error at 'var': Expect expression.
+switch (nil) {
+    case nil: "ok";
+    default: var foo;
+}

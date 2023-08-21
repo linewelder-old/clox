@@ -1,0 +1,5 @@
+// [line 4] Error at 'class': Expect expression.
+switch (nil) {
+    case nil: "ok";
+    default: class Foo {}
+}

@@ -1,0 +1,4 @@
+switch (nil) {
+    default:
+    case nil: print "error"; // Error at 'case': Default case must be the last one.
+}

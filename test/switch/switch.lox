@@ -1,0 +1,37 @@
+// Evaluate a case branch only if matches.
+switch (3) {
+    case 3: print "good"; // expect: good
+}
+switch (4) {
+    case 3: print "bad";
+}
+
+// Evaluate the right case branch.
+switch ("test") {
+    case "test": print "do"; // expect: do
+    case "wrong": print "do not";
+}
+
+// Evaluate the default branch if nothing else matches.
+switch (nil) {
+    case true: print "True";
+    case false: print "False";
+    default: print "Null"; // expect: Null
+}
+
+// Allow blocks in cases.
+switch (3) {
+    case 3: { print "block"; } // expect: block
+}
+
+// Assignment in switch condition.
+var a = 0;
+switch (a = 4) {
+    case 4: print a; // expect: 4
+    default: print "not right";
+}
+
+// Allow expressions in case values.
+switch (2 + 2 * 2) {
+    case 2 * 3: print "wow"; // expect: wow
+}
