@@ -699,7 +699,7 @@ static void function(FunctionType type) {
         } while (match(TOKEN_COMMA));
     }
     consume(TOKEN_RIGHT_PAREN, "Expect ')' after parameters.");
-    consume(TOKEN_LEFT_BRACE, "Expect '{' after function body.");
+    consume(TOKEN_LEFT_BRACE, "Expect '{' before function body.");
     block();
 
     ObjFunction* function = endCompiler();
