@@ -71,13 +71,8 @@ function run_test() {
         2>$CLOX_STDERR
     read_clox_errors <$CLOX_STDERR >$CLOX_ERRORS
 
-    if ! diff $TEST_OUTPUT $CLOX_OUTPUT >/dev/null; then
-        return 1
-    fi
-
-    if ! diff $TEST_ERRORS $CLOX_ERRORS >/dev/null; then
-        return 2
-    fi
+    diff $TEST_OUTPUT $CLOX_OUTPUT >/dev/null || return 1
+    diff $TEST_ERRORS $CLOX_ERRORS >/dev/null || return 2
 }
 
 FAILED=0
@@ -142,9 +137,7 @@ function do_test() {
     fi
 }
 
-if [[ ! -d $TMP_DIR ]]; then
-    mkdir -p $TMP_DIR
-fi
+[[ -d $TMP_DIR ]] || mkdir -p $TMP_DIR
 
 for TEST in $(ls $TEST_DIR); do
     do_test $TEST
