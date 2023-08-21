@@ -34,6 +34,8 @@ function read_test_errors() {
         sed "s/^\[line \([[:digit:]]*\)\] \(.*\)$/\1\terror\t\2/"
     grep -noP "// \KError .*$" "$1" |
         sed "s/\([[:digit:]]*\):\(.*\)$/\1\terror\t\2/"
+    grep -noP "// expect runtime error: \K.*$" "$1" |
+        sed "s/\([[:digit:]]*\):\(.*\)$/\1\truntime error\t\2/"
 }
 
 # read_clox_errors
@@ -51,8 +53,15 @@ function read_clox_errors() {
             echo $LINE | sed "s/^\[line \([[:digit:]]*\)\] \(.*\)$/\1\terror\t\2/"
             next_line
             next_line
-        # else
+        else
             # Runtime error
+            MESSAGE=$LINE
+            next_line
+
+            echo $LINE |
+                sed "s/^\[line \([[:digit:]]*\)\] \(.*\)$/\1\truntime error\t$MESSAGE/"
+
+            return # Assume there is nothing after the error.
         fi
     done
 }
@@ -98,12 +107,6 @@ function do_test() {
         done
     else
         echo -n "$BOLD${TEST_NAME%.lox} "
-
-        # We do not support runtime error testing just yet.
-        if grep -q "runtime error" $TEST_PATH; then
-            echo "${MID}skip$NORMAL"
-            return
-        fi
 
         run_test $TEST_PATH
         RESULT=$?
