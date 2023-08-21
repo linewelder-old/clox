@@ -97,8 +97,16 @@ void push(Value value) {
         vm.stackTop = vm.stack + stackSize;
         vm.stackEnd = vm.stack + newCapacity;
 
+        size_t offset = vm.stack - oldStack;
+
+        ObjUpvalue* upvalue = vm.openUpvalues;
+        while (upvalue != NULL) {
+            upvalue->location += offset;
+            upvalue = upvalue->next;
+        }
+
         for (int i = 0; i < vm.frameCount; i++) {
-            vm.frames[i].slots += vm.stack - oldStack;
+            vm.frames[i].slots += offset;
         }
     }
 
