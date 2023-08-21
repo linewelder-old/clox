@@ -1,5 +1,7 @@
 # clox
 
+![Tests](https://github.com/linewelder/clox/actions/workflows/test.yml/badge.svg)
+
 A brand new Lox interpreter, now in C, still written along with Robert Nystrom's
 wonderful book ["Crafting Interpreters"](http://craftinginterpreters.com).
 
