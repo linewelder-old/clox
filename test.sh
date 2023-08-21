@@ -148,3 +148,5 @@ done
 
 echo "$((FAILED + PASSED)) tests, $PASSED passed, $FAILED failed"
 rm -r $TMP_DIR
+
+[[ $FAILED = 0 ]] || exit 1
