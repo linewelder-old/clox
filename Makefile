@@ -11,14 +11,14 @@ DEP_DIR := $(BUILD_DIR)/.deps
 DEP_FLAGS = -MT $@ -MMD -MP -MF $(DEP_DIR)/$*.Td
 OBJS := $(SRCS:$(SRC_DIR)/%.c=$(BUILD_DIR)/%.o)
 
-$(BUILD_DIR)/$(TARGET_EXEC): $(BUILD_DIR) $(OBJS)
+$(BUILD_DIR)/$(TARGET_EXEC): $(OBJS) | $(BUILD_DIR)
 	$(CC) $(CFLAGS) $(OBJS) -o $@
 
 $(BUILD_DIR):
 	mkdir $(BUILD_DIR)
 
 %.o: %.cpp # Delete the default implicit rule.
-$(BUILD_DIR)/%.o: $(SRC_DIR)/%.c $(DEP_DIR)/%.d
+$(BUILD_DIR)/%.o: $(SRC_DIR)/%.c $(DEP_DIR)/%.d | $(BUILD_DIR)
 	$(CC) $(DEP_FLAGS) $(CFLAGS) -c $< -o $@
 
 # During compilation dependencies are written to a temporary file in order to
