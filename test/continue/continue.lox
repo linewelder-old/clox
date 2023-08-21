@@ -1,0 +1,23 @@
+// Continue skips over the rest of the cycle.
+for (var i = 0; i < 10; i = i + 1) {
+    if (i != 4) continue;
+    print i; // expect: 4
+}
+
+// Continue works in while loops.
+var i = 3;
+while (i > 0) {
+    i = i - 1;
+    print "before";
+
+    if (i == 2) continue;
+    print "while";
+
+    continue;
+    print "never";
+}
+// expect: before
+// expect: before
+// expect: while
+// expect: before
+// expect: while
