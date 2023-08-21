@@ -497,7 +497,11 @@ static InterpretResult run() {
                     double bNumber = AS_NUMBER(b);
                     vm.stackTop--;
                     replace(0, NUMBER_VAL(aNumber + bNumber));
+                } else {
+                    RUNTIME_ERROR(
+                        "Operands must be two numbers or two strings.");
                 }
+
                 break;
             }
             case OP_SUBTRACT: BINARY_OP(NUMBER_VAL, -); break;
