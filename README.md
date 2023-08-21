@@ -3,6 +3,9 @@
 A brand new Lox interpreter, now in C, still written along with Robert Nystrom's
 wonderful book ["Crafting Interpreters"](http://craftinginterpreters.com).
 
+The test suite was adapted from ["the book's
+repository"](https://github.com/munificent/craftinginterpreters).
+
 ## Differences from the original version
 
 The interpreter supports features that were suggested to be added in the
