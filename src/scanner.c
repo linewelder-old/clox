@@ -184,12 +184,18 @@ static Token number() {
 }
 
 static Token string() {
+    int startLine = scanner.line;
     while (peek() != '"' && !isAtEnd()) {
         if (peek() == '\n') scanner.line++;
         advance();
     }
 
-    if (isAtEnd()) return errorToken("Unterminated string.");
+    if (isAtEnd()) {
+        Token unterminated = errorToken("Unterminated string.");
+        unterminated.line = startLine;
+        unterminated.length = 1; // We do not want to print the whole rest of the file.
+        return unterminated;
+    }
 
     advance();
     return makeToken(TOKEN_STRING);
