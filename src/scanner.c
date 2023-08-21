@@ -207,6 +207,7 @@ Token scanToken() {
     skipWhitespace();
     if (isAtEnd()) {
         scanner.start = startChar;
+        scanner.current = startChar;
         scanner.line = startLine;
         return eofToken();
     }
