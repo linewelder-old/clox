@@ -11,6 +11,8 @@ DEP_DIR := $(BUILD_DIR)/.deps
 DEP_FLAGS = -MT $@ -MMD -MP -MF $(DEP_DIR)/$*.Td
 OBJS := $(SRCS:$(SRC_DIR)/%.c=$(BUILD_DIR)/%.o)
 
+all: $(BUILD_DIR)/$(TARGET_EXEC)
+
 $(BUILD_DIR)/$(TARGET_EXEC): $(OBJS) | $(BUILD_DIR)
 	$(CC) $(CFLAGS) $(OBJS) -o $@
 
