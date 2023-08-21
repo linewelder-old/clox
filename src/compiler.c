@@ -956,8 +956,10 @@ static void switchStatement() {
     consume(TOKEN_RIGHT_BRACE, "Expect '}' after switch body.");
 
     if (skipJump >= 0) {
+        int skipPopJump = emitJump(OP_JUMP);
         patchJump(skipJump);
         emitByte(OP_POP);
+        patchJump(skipPopJump);
     }
     patchJump(exitJump);
     emitByte(OP_POP);
